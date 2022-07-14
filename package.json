@@ -1,0 +1,9 @@
+{
+  "name": "elevatorsaga",
+  "scripts": {
+    "lint": "npx eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^8.19.0"
+  }
+}
