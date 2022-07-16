@@ -1,7 +1,7 @@
 {
   "name": "elevatorsaga",
   "scripts": {
-    "lint": "npx eslint ."
+    "lint": "npx eslint script/*.js libs/riot.js libs/unobservable.js test/tests.js"
   },
   "devDependencies": {
     "eslint": "^8.19.0"
