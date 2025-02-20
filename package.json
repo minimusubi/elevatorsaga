@@ -1,9 +1,14 @@
 {
   "name": "elevatorsaga",
   "scripts": {
-    "lint": "npx eslint script/*.js libs/riot.js libs/unobservable.js test/tests.js"
+    "lint": "npx eslint script/*.js libs/riot.js libs/unobservable.js test/tests.js",
+    "format": "npx prettier --write ."
   },
   "devDependencies": {
-    "eslint": "^8.19.0"
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.1",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.2"
   }
 }
