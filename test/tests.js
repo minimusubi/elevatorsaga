@@ -1,10 +1,15 @@
-import {createFrameRequester, getCodeObjFromCode} from '../script/base.js';
+import { createFrameRequester, getCodeObjFromCode } from '../script/base.js';
 import Elevator from '../script/elevator.js';
 import ElevatorInterface from '../script/interfaces.js';
 import Movable from '../script/movable.js';
 import User from '../script/user.js';
-import {requireUserCountWithinMoves, requireUserCountWithinTime, requireUserCountWithinTimeWithMaxWaitTime, requireUserCountWithMaxWaitTime} from '../script/challenges.js';
-import {WorldController} from '../script/world.js';
+import {
+	requireUserCountWithinMoves,
+	requireUserCountWithinTime,
+	requireUserCountWithinTimeWithMaxWaitTime,
+	requireUserCountWithMaxWaitTime,
+} from '../script/challenges.js';
+import { WorldController } from '../script/world.js';
 
 const timeForwarder = function (dt, stepSize, fn) {
 	let accumulated = 0.0;
@@ -15,13 +20,9 @@ const timeForwarder = function (dt, stepSize, fn) {
 };
 
 describe('Elevator Saga', () => {
-
 	let handlers = null;
 	beforeEach(() => {
-		handlers = {
-			someHandler: function () { },
-			someOtherHandler: function () { },
-		};
+		handlers = { someHandler: function () {}, someOtherHandler: function () {} };
 		$.each(handlers, (key, value) => {
 			spyOn(handlers, key).and.callThrough();
 		});
@@ -129,7 +130,7 @@ describe('Elevator Saga', () => {
 			fakeWorld.init = function () {};
 			fakeWorld.updateDisplayPositions = function () {};
 			fakeWorld.trigger = function () {};
-			fakeCodeObj = {init: function () {}, update: function () {}};
+			fakeCodeObj = { init: function () {}, update: function () {} };
 			frameRequester = createFrameRequester(10.0);
 			spyOn(fakeWorld, 'update').and.callThrough();
 		});
@@ -163,7 +164,7 @@ describe('Elevator Saga', () => {
 	describe('Challenge requirements', () => {
 		let fakeWorld = null;
 		beforeEach(() => {
-			fakeWorld = {elapsedTime: 0.0, transportedCounter: 0, maxWaitTime: 0.0, moveCount: 0};
+			fakeWorld = { elapsedTime: 0.0, transportedCounter: 0, maxWaitTime: 0.0, moveCount: 0 };
 		});
 
 		describe('requireUserCountWithinTime', () => {
@@ -232,7 +233,8 @@ describe('Elevator Saga', () => {
 			_.each(_.range(0, floorCount - 1), (floor) => {
 				e.goToFloor(floor);
 				timeForwarder(10.0, 0.015, (dt) => {
-					e.update(dt); e.updateElevatorMovement(dt);
+					e.update(dt);
+					e.updateElevatorMovement(dt);
 				});
 				const expectedY = floorHeight * (floorCount - 1) - floorHeight * floor;
 				expect(e.y).toBe(expectedY);
@@ -245,12 +247,14 @@ describe('Elevator Saga', () => {
 			const originalY = e.y;
 			e.goToFloor(1);
 			timeForwarder(0.2, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.y).not.toBe(originalY);
 			e.goToFloor(0);
 			timeForwarder(10.0, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.y).toBe(originalY);
 			expect(e.currentFloor).toBe(0);
@@ -286,7 +290,8 @@ describe('Elevator Saga', () => {
 		it('reports not approaching floor 0 when going up from floor 0', () => {
 			e.goToFloor(1);
 			timeForwarder(0.01, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.isApproachingFloor(0)).toBe(false);
 		});
@@ -294,7 +299,8 @@ describe('Elevator Saga', () => {
 		it('reports approaching floor 2 when going up from floor 0', () => {
 			e.goToFloor(1);
 			timeForwarder(0.01, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.isApproachingFloor(2)).toBe(true);
 		});
@@ -303,7 +309,8 @@ describe('Elevator Saga', () => {
 			e.setFloorPosition(3);
 			e.goToFloor(2);
 			timeForwarder(0.01, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.isApproachingFloor(2)).toBe(true);
 		});
@@ -315,7 +322,8 @@ describe('Elevator Saga', () => {
 			});
 			e.goToFloor(1);
 			timeForwarder(10.0, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.currentFloor).toBe(1);
 			expect(handlers.someHandler).not.toHaveBeenCalled();
@@ -324,7 +332,8 @@ describe('Elevator Saga', () => {
 			e.on('passing_floor', handlers.someHandler);
 			e.goToFloor(2);
 			timeForwarder(10.0, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.currentFloor).toBe(2);
 			expect(handlers.someHandler.calls.count()).toEqual(1);
@@ -334,7 +343,8 @@ describe('Elevator Saga', () => {
 			e.on('passing_floor', handlers.someHandler);
 			e.goToFloor(3);
 			timeForwarder(10.0, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.currentFloor).toBe(3);
 			expect(handlers.someHandler.calls.count()).toEqual(2);
@@ -345,7 +355,8 @@ describe('Elevator Saga', () => {
 			e.on('passing_floor', handlers.someHandler);
 			e.goToFloor(3);
 			timeForwarder(10.0, 0.015, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(e.currentFloor).toBe(3);
 			expect(handlers.someHandler.calls.count()).toEqual(2);
@@ -362,7 +373,8 @@ describe('Elevator Saga', () => {
 			});
 			e.goToFloor(2);
 			timeForwarder(3.0, 0.01401, (dt) => {
-				e.update(dt); e.updateElevatorMovement(dt);
+				e.update(dt);
+				e.updateElevatorMovement(dt);
 			});
 			expect(passingFloorEventCount).toBeGreaterThan(0, 'event count');
 			expect(e.getExactCurrentFloor()).toBeLessThan(1.15, 'current floor');
@@ -380,9 +392,7 @@ describe('Elevator Saga', () => {
 				});
 				expect(e.getExactCurrentFloor()).toEqual(3.0);
 			});
-
 		});
-
 	});
 
 	describe('API', () => {
@@ -430,19 +440,22 @@ describe('Elevator Saga', () => {
 				const originalY = e.y;
 				elevInterface.goToFloor(2);
 				timeForwarder(10, 0.015, (dt) => {
-					e.update(dt); e.updateElevatorMovement(dt);
+					e.update(dt);
+					e.updateElevatorMovement(dt);
 				});
 				expect(e.y).not.toBe(originalY);
 
 				elevInterface.goToFloor(0);
 				timeForwarder(0.2, 0.015, (dt) => {
-					e.update(dt); e.updateElevatorMovement(dt);
+					e.update(dt);
+					e.updateElevatorMovement(dt);
 				});
 				const whenMovingY = e.y;
 
 				elevInterface.stop();
 				timeForwarder(10, 0.015, (dt) => {
-					e.update(dt); e.updateElevatorMovement(dt);
+					e.update(dt);
+					e.updateElevatorMovement(dt);
 				});
 				expect(e.y).not.toBe(whenMovingY);
 				expect(e.y).not.toBe(originalY);
@@ -488,7 +501,7 @@ describe('Elevator Saga', () => {
 
 			it('normalizes load factor', () => {
 				const fnNewUser = function () {
-						return {weight: _.random(55, 100)};
+						return { weight: _.random(55, 100) };
 					},
 					fnEnterElevator = function (user) {
 						e.userEntering(user);
@@ -511,7 +524,8 @@ describe('Elevator Saga', () => {
 					elevInterface.stop();
 				});
 				timeForwarder(3.0, 0.01401, (dt) => {
-					e.update(dt); e.updateElevatorMovement(dt);
+					e.update(dt);
+					e.updateElevatorMovement(dt);
 				});
 				expect(passingFloorEventCount).toBeGreaterThan(0);
 			});

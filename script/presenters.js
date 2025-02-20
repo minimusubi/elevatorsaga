@@ -19,7 +19,6 @@ function updateUserState($user, elem_user, user) {
 }
 
 export function presentStats($parent, world) {
-
 	const elem_transportedcounter = $parent.find('.transportedcounter').get(0),
 		elem_elapsedtime = $parent.find('.elapsedtime').get(0),
 		elem_transportedpersec = $parent.find('.transportedpersec').get(0),
@@ -39,12 +38,18 @@ export function presentStats($parent, world) {
 }
 
 export function presentChallenge($parent, challenge, app, world, worldController, challengeNum, challengeTempl) {
-	const $challenge = $(riot.render(challengeTempl, {
-		challenge: challenge,
-		num: challengeNum,
-		timeScale: `${worldController.timeScale.toFixed(0)}x`,
-		startButtonText: world.challengeEnded ? "<i class='fa fa-repeat'></i> Restart" : worldController.isPaused ? 'Start' : 'Pause',
-	}));
+	const $challenge = $(
+		riot.render(challengeTempl, {
+			challenge: challenge,
+			num: challengeNum,
+			timeScale: `${worldController.timeScale.toFixed(0)}x`,
+			startButtonText: world.challengeEnded
+				? "<i class='fa fa-repeat'></i> Restart"
+				: worldController.isPaused
+					? 'Start'
+					: 'Pause',
+		}),
+	);
 	$parent.html($challenge);
 
 	$parent.find('.startstop').on('click', () => {
@@ -65,7 +70,14 @@ export function presentChallenge($parent, challenge, app, world, worldController
 }
 
 export function presentFeedback($parent, feedbackTempl, world, title, message, url) {
-	$parent.html(riot.render(feedbackTempl, {title: title, message: message, url: url, paddingTop: world.floors.length * world.floorHeight * 0.2}));
+	$parent.html(
+		riot.render(feedbackTempl, {
+			title: title,
+			message: message,
+			url: url,
+			paddingTop: world.floors.length * world.floorHeight * 0.2,
+		}),
+	);
 	if (!url) {
 		$parent.find('a').remove();
 	}
@@ -74,34 +86,36 @@ export function presentFeedback($parent, feedbackTempl, world, title, message, u
 export function presentWorld($world, world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl) {
 	$world.css('height', world.floorHeight * world.floors.length);
 
-	$world.append(_.map(world.floors, (f) => {
-		const $floor = $(riot.render(floorTempl, f));
-		const $up = $floor.find('.up');
-		const $down = $floor.find('.down');
-		f.on('buttonstate_change', (buttonStates) => {
-			$up.toggleClass('activated', buttonStates.up !== '');
-			$down.toggleClass('activated', buttonStates.down !== '');
-		});
-		$up.on('click', () => {
-			f.pressUpButton();
-		});
-		$down.on('click', () => {
-			f.pressDownButton();
-		});
-		return $floor;
-	}));
+	$world.append(
+		_.map(world.floors, (f) => {
+			const $floor = $(riot.render(floorTempl, f));
+			const $up = $floor.find('.up');
+			const $down = $floor.find('.down');
+			f.on('buttonstate_change', (buttonStates) => {
+				$up.toggleClass('activated', buttonStates.up !== '');
+				$down.toggleClass('activated', buttonStates.down !== '');
+			});
+			$up.on('click', () => {
+				f.pressUpButton();
+			});
+			$down.on('click', () => {
+				f.pressDownButton();
+			});
+			return $floor;
+		}),
+	);
 	$world.find('.floor').first().find('.down').addClass('invisible');
 	$world.find('.floor').last().find('.up').addClass('invisible');
 
 	function renderElevatorButtons(states) {
 		// This is a rarely executed inner-inner loop, does not need efficiency
 		return _.map(states, (b, i) => {
-			return riot.render(elevatorButtonTempl, {floorNum: i});
+			return riot.render(elevatorButtonTempl, { floorNum: i });
 		}).join('');
 	}
 
 	function setUpElevator(e) {
-		const $elevator = $(riot.render(elevatorTempl, {e: e}));
+		const $elevator = $(riot.render(elevatorTempl, { e: e }));
 		const elem_elevator = $elevator.get(0);
 		$elevator.find('.buttonindicator').html(renderElevatorButtons(e.buttonStates));
 		const $buttons = _.map($elevator.find('.buttonindicator').children(), (c) => {
@@ -131,12 +145,14 @@ export function presentWorld($world, world, floorTempl, elevatorTempl, elevatorB
 		return $elevator;
 	}
 
-	$world.append(_.map(world.elevators, (e) => {
-		return setUpElevator(e);
-	}));
+	$world.append(
+		_.map(world.elevators, (e) => {
+			return setUpElevator(e);
+		}),
+	);
 
 	world.on('new_user', (user) => {
-		const $user = $(riot.render(userTempl, {u: user, state: user.done ? 'leaving' : ''}));
+		const $user = $(riot.render(userTempl, { u: user, state: user.done ? 'leaving' : '' }));
 		const elem_user = $user.get(0);
 
 		user.on('new_display_state', () => {
@@ -158,11 +174,15 @@ export function presentCodeStatus($parent, templ, error) {
 		errorMessage = error.stack;
 		errorMessage = errorMessage.replace(/\n/g, '<br>');
 	}
-	const status = riot.render(templ, {errorMessage: errorMessage, errorDisplay: errorDisplay, successDisplay: successDisplay});
+	const status = riot.render(templ, {
+		errorMessage: errorMessage,
+		errorDisplay: errorDisplay,
+		successDisplay: successDisplay,
+	});
 	$parent.html(status);
 }
 
 export function makeDemoFullscreen() {
 	$('body .container > *').not('.world').css('visibility', 'hidden');
-	$('html, body, body .container, .world').css({width: '100%', margin: '0', 'padding': 0});
+	$('html, body, body .container, .world').css({ width: '100%', margin: '0', padding: 0 });
 }

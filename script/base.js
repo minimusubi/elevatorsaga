@@ -41,7 +41,8 @@ export const createFrameRequester = function (timeStep) {
 		currentCb = cb;
 	};
 	requester.trigger = function () {
-		requester.currentT += timeStep; if (currentCb !== null) {
+		requester.currentT += timeStep;
+		if (currentCb !== null) {
 			currentCb(requester.currentT);
 		}
 	};
@@ -61,4 +62,3 @@ export const getCodeObjFromCode = async function (code) {
 	}
 	return obj;
 };
-

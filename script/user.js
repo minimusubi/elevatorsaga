@@ -10,7 +10,7 @@ export default class User extends Movable {
 		this.done = false;
 		this.removeMe = false;
 	}
-    
+
 	appearOnFloor(floor, destinationFloorNum) {
 		const floorPosY = floor.getSpawnPosY();
 		this.currentFloor = floor.level;
@@ -18,7 +18,7 @@ export default class User extends Movable {
 		this.moveTo(null, floorPosY);
 		this.pressFloorButton(floor);
 	}
-    
+
 	pressFloorButton(floor) {
 		if (this.destinationFloor < this.currentFloor) {
 			floor.pressDownButton();
@@ -26,7 +26,7 @@ export default class User extends Movable {
 			floor.pressUpButton();
 		}
 	}
-    
+
 	handleExit(floorNum, elevator) {
 		if (elevator.currentFloor === this.destinationFloor) {
 			elevator.userExiting(this);
@@ -43,21 +43,21 @@ export default class User extends Movable {
 				self.trigger('removed');
 				self.off('*');
 			});
-    
+
 			elevator.off('exit_available', this.exitAvailableHandler);
 		}
 	}
-    
+
 	elevatorAvailable(elevator, floor) {
 		if (this.done || this.parent !== null || this.isBusy()) {
 			return;
 		}
-    
+
 		if (!elevator.isSuitableForTravelBetween(this.currentFloor, this.destinationFloor)) {
 			// Not suitable for travel - don't use this elevator
 			return;
 		}
-    
+
 		const pos = elevator.userEntering(this);
 		if (pos) {
 			// Success
@@ -76,4 +76,3 @@ export default class User extends Movable {
 		}
 	}
 }
-

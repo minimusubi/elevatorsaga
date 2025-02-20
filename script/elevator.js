@@ -1,4 +1,10 @@
-import {accelerationNeededToAchieveChangeDistance, deprecationWarning, distanceNeededToAchieveSpeed, epsilonEquals, limitNumber} from './base.js';
+import {
+	accelerationNeededToAchieveChangeDistance,
+	deprecationWarning,
+	distanceNeededToAchieveSpeed,
+	epsilonEquals,
+	limitNumber,
+} from './base.js';
 import Movable from './movable.js';
 
 function newElevStateHandler(elevator) {
@@ -8,7 +14,7 @@ function newElevStateHandler(elevator) {
 export default class Elevator extends Movable {
 	constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers) {
 		super();
-		
+
 		this.ACCELERATION = floorHeight * 2.1;
 		this.DECELERATION = floorHeight * 2.6;
 		this.MAXSPEED = floorHeight * speedFloorsPerSec;
@@ -31,7 +37,7 @@ export default class Elevator extends Movable {
 		this.moveCount = 0;
 		this.removed = false;
 		this.userSlots = _.map(_.range(this.maxUsers), (user, i) => {
-			return {pos: [2 + i * 10, 30], user: null};
+			return { pos: [2 + i * 10, 30], user: null };
 		});
 		this.width = this.maxUsers * 10;
 		this.destinationY = this.getYPosOfFloor(this.currentFloor);
@@ -39,29 +45,29 @@ export default class Elevator extends Movable {
 		this.on('new_state', newElevStateHandler);
 
 		this.on('change:goingUpIndicator', (value) => {
-			this.trigger('indicatorstate_change', {up: this.goingUpIndicator, down: this.goingDownIndicator});
-			
+			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
+
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
 				this.goToFloor(this.getExactFloorOfYPos(this.worldY), true);
 			}
 		});
 
 		this.on('change:goingDownIndicator', (value) => {
-			this.trigger('indicatorstate_change', {up: this.goingUpIndicator, down: this.goingDownIndicator});
-			
+			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
+
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
 				this.goToFloor(this.getExactFloorOfYPos(this.worldY), true);
 			}
 		});
 	}
-	
+
 	setFloorPosition(floor) {
 		const destination = this.getYPosOfFloor(floor);
 		this.currentFloor = floor;
 		this.previousTruncFutureFloorIfStopped = floor;
 		this.moveTo(null, destination);
 	}
-	
+
 	userEntering(user) {
 		const randomOffset = _.random(this.userSlots.length - 1);
 		for (let i = 0; i < this.userSlots.length; i++) {
@@ -73,7 +79,7 @@ export default class Elevator extends Movable {
 		}
 		return false;
 	}
-	
+
 	pressFloorButton(floorNumber) {
 		floorNumber = limitNumber(floorNumber, 0, this.floorCount - 1);
 		const prev = this.buttonStates[floorNumber];
@@ -83,7 +89,7 @@ export default class Elevator extends Movable {
 			this.trigger('floor_buttons_changed', this.buttonStates, floorNumber);
 		}
 	}
-	
+
 	userExiting(user) {
 		for (let i = 0; i < this.userSlots.length; i++) {
 			const slot = this.userSlots[i];
@@ -92,19 +98,19 @@ export default class Elevator extends Movable {
 			}
 		}
 	}
-	
+
 	updateElevatorMovement(dt) {
 		if (this.isBusy()) {
 			// TODO: Consider if having a nonzero velocity here should throw error..
 			return;
 		}
-	
+
 		// Make sure we're not speeding
 		this.velocityY = limitNumber(this.velocityY, -this.MAXSPEED, this.MAXSPEED);
-	
+
 		// Move elevator
 		this.moveTo(null, this.y + this.velocityY * dt);
-	
+
 		const destinationDiff = this.destinationY - this.y;
 		const directionSign = Math.sign(destinationDiff);
 		const velocitySign = Math.sign(this.velocityY);
@@ -116,7 +122,11 @@ export default class Elevator extends Movable {
 				if (distanceNeededToStop * 1.05 < -Math.abs(destinationDiff)) {
 					// Slow down
 					// Allow a certain factor of extra breaking, to enable a smooth breaking movement after detecting overshoot
-					const requiredDeceleration = accelerationNeededToAchieveChangeDistance(this.velocityY, 0.0, destinationDiff);
+					const requiredDeceleration = accelerationNeededToAchieveChangeDistance(
+						this.velocityY,
+						0.0,
+						destinationDiff,
+					);
 					const deceleration = Math.min(this.DECELERATION * 1.1, Math.abs(requiredDeceleration));
 					this.velocityY -= directionSign * deceleration * dt;
 				} else {
@@ -137,7 +147,7 @@ export default class Elevator extends Movable {
 				}
 			}
 		}
-	
+
 		if (this.isMoving && Math.abs(destinationDiff) < 0.5 && Math.abs(this.velocityY) < 3) {
 			// Snap to destination and stop
 			this.moveTo(null, this.destinationY);
@@ -146,10 +156,10 @@ export default class Elevator extends Movable {
 			this.handleDestinationArrival();
 		}
 	}
-	
+
 	handleDestinationArrival() {
 		this.trigger('stopped', this.getExactCurrentFloor());
-	
+
 		if (this.isOnAFloor()) {
 			this.buttonStates[this.currentFloor] = false;
 			this.trigger('floor_buttons_changed', this.buttonStates, this.currentFloor);
@@ -160,13 +170,13 @@ export default class Elevator extends Movable {
 			this.trigger('entrance_available', this);
 		}
 	}
-	
+
 	goToFloor(floor) {
 		this.makeSureNotBusy();
 		this.isMoving = true;
 		this.destinationY = this.getYPosOfFloor(floor);
 	}
-	
+
 	getFirstPressedFloor() {
 		deprecationWarning('getFirstPressedFloor');
 		for (let i = 0; i < this.buttonStates.length; i++) {
@@ -176,7 +186,7 @@ export default class Elevator extends Movable {
 		}
 		return 0;
 	}
-	
+
 	getPressedFloors() {
 		const arr = [];
 		for (let i = 0; i < this.buttonStates.length; i++) {
@@ -186,7 +196,7 @@ export default class Elevator extends Movable {
 		}
 		return arr;
 	}
-	
+
 	isSuitableForTravelBetween(fromFloorNum, toFloorNum) {
 		if (fromFloorNum > toFloorNum) {
 			return this.goingDownIndicator;
@@ -196,49 +206,53 @@ export default class Elevator extends Movable {
 		}
 		return true;
 	}
-	
+
 	getYPosOfFloor(floorNum) {
 		return (this.floorCount - 1) * this.floorHeight - floorNum * this.floorHeight;
 	}
-	
+
 	getExactFloorOfYPos(y) {
 		return ((this.floorCount - 1) * this.floorHeight - y) / this.floorHeight;
 	}
-	
+
 	getExactCurrentFloor() {
 		return this.getExactFloorOfYPos(this.y);
 	}
-	
+
 	getDestinationFloor() {
 		return this.getExactFloorOfYPos(this.destinationY);
 	}
-	
+
 	getRoundedCurrentFloor() {
 		return Math.round(this.getExactCurrentFloor());
 	}
-	
+
 	getExactFutureFloorIfStopped() {
 		const distanceNeededToStop = distanceNeededToAchieveSpeed(this.velocityY, 0.0, this.DECELERATION);
 		return this.getExactFloorOfYPos(this.y - Math.sign(this.velocityY) * distanceNeededToStop);
 	}
-	
+
 	isApproachingFloor(floorNum) {
 		const floorYPos = this.getYPosOfFloor(floorNum);
 		const elevToFloor = floorYPos - this.y;
 		return this.velocityY !== 0.0 && Math.sign(this.velocityY) === Math.sign(elevToFloor);
 	}
-	
+
 	isOnAFloor() {
 		return epsilonEquals(this.getExactCurrentFloor(), this.getRoundedCurrentFloor());
 	}
-	
+
 	getLoadFactor() {
-		const load = _.reduce(this.userSlots, (sum, slot) => {
-			return sum + (slot.user ? slot.user.weight : 0);
-		}, 0);
+		const load = _.reduce(
+			this.userSlots,
+			(sum, slot) => {
+				return sum + (slot.user ? slot.user.weight : 0);
+			},
+			0,
+		);
 		return load / (this.maxUsers * 100);
 	}
-	
+
 	isFull() {
 		for (let i = 0; i < this.userSlots.length; i++) {
 			if (this.userSlots[i].user === null) {
@@ -255,7 +269,7 @@ export default class Elevator extends Movable {
 		}
 		return true;
 	}
-	
+
 	handleNewState() {
 		// Recalculate the floor number etc
 		const currentFloor = this.getRoundedCurrentFloor();
@@ -264,7 +278,7 @@ export default class Elevator extends Movable {
 			this.currentFloor = currentFloor;
 			this.trigger('new_current_floor', this.currentFloor);
 		}
-	
+
 		// Check if we are about to pass a floor
 		const futureTruncFloorIfStopped = Math.trunc(this.getExactFutureFloorIfStopped());
 		if (futureTruncFloorIfStopped !== this.previousTruncFutureFloorIfStopped) {
@@ -274,7 +288,7 @@ export default class Elevator extends Movable {
 			// pass more than one floor over the course of one state change (update).
 			// But I can't currently be arsed to implement it because it's overkill.
 			const floorBeingPassed = Math.round(this.getExactFutureFloorIfStopped());
-	
+
 			// Never emit passing_floor event for the destination floor
 			// Because if it's the destination we're not going to pass it, at least not intentionally
 			if (this.getDestinationFloor() !== floorBeingPassed && this.isApproachingFloor(floorBeingPassed)) {

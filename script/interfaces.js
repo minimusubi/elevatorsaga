@@ -1,4 +1,4 @@
-import {epsilonEquals, limitNumber} from './base.js';
+import { epsilonEquals, limitNumber } from './base.js';
 
 // Interface that hides actual elevator object behind a more robust facade,
 // while also exposing relevant events, and providing some helper queue
@@ -6,15 +6,15 @@ import {epsilonEquals, limitNumber} from './base.js';
 
 export default class ElevatorInterface extends riot.observable {
 	#elevator = null;
-	
+
 	constructor(elevator, floorCount, errorHandler) {
 		super();
-		
+
 		this.#elevator = elevator;
 		this.floorCount = floorCount;
 		this.errorHandler = errorHandler;
 		this.destinationQueue = [];
-		
+
 		elevator.on('stopped', (position) => {
 			if (this.destinationQueue.length && epsilonEquals(_.first(this.destinationQueue), position)) {
 				// Reached the destination, so remove element at front of queue
@@ -28,11 +28,11 @@ export default class ElevatorInterface extends riot.observable {
 				}
 			}
 		});
-	
+
 		elevator.on('passing_floor', (floorNum, direction) => {
 			this.tryTrigger('passing_floor', floorNum, direction);
 		});
-	
+
 		elevator.on('stopped_at_floor', (floorNum) => {
 			this.tryTrigger('stopped_at_floor', floorNum);
 		});
@@ -40,7 +40,7 @@ export default class ElevatorInterface extends riot.observable {
 			this.tryTrigger('floor_button_pressed', floorNum);
 		});
 	}
-	
+
 	tryTrigger(event, ...args) {
 		try {
 			this.trigger(event, ...args);
@@ -48,7 +48,7 @@ export default class ElevatorInterface extends riot.observable {
 			this.errorHandler(e);
 		}
 	}
-	
+
 	checkDestinationQueue() {
 		if (!this.#elevator.isBusy()) {
 			if (this.destinationQueue.length) {
@@ -101,7 +101,7 @@ export default class ElevatorInterface extends riot.observable {
 		}
 		return this.#elevator.destinationY > this.#elevator.y ? 'down' : 'up';
 	}
-	
+
 	goingUpIndicator(value) {
 		if (typeof value !== 'undefined') {
 			this.#elevator.goingUpIndicator = value ? true : false;
@@ -111,7 +111,7 @@ export default class ElevatorInterface extends riot.observable {
 			return this.#elevator.goingUpIndicator;
 		}
 	}
-	
+
 	goingDownIndicator(value) {
 		if (typeof value !== 'undefined') {
 			this.#elevator.goingDownIndicator = value ? true : false;

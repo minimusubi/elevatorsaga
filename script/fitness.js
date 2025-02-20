@@ -8,9 +8,30 @@ const requireNothing = function () {
 };
 
 const fitnessChallenges = [
-	{options: {description: 'Small scenario', floorCount: 4, elevatorCount: 2, spawnRate: 0.6}, condition: requireNothing()},
-	{options: {description: 'Medium scenario', floorCount: 6, elevatorCount: 3, spawnRate: 1.5, elevatorCapacities: [5]}, condition: requireNothing()},
-	{options: {description: 'Large scenario', floorCount: 18, elevatorCount: 6, spawnRate: 1.9, elevatorCapacities: [8]}, condition: requireNothing()},
+	{
+		options: { description: 'Small scenario', floorCount: 4, elevatorCount: 2, spawnRate: 0.6 },
+		condition: requireNothing(),
+	},
+	{
+		options: {
+			description: 'Medium scenario',
+			floorCount: 6,
+			elevatorCount: 3,
+			spawnRate: 1.5,
+			elevatorCapacities: [5],
+		},
+		condition: requireNothing(),
+	},
+	{
+		options: {
+			description: 'Large scenario',
+			floorCount: 18,
+			elevatorCount: 6,
+			spawnRate: 1.9,
+			elevatorCapacities: [8],
+		},
+		condition: requireNothing(),
+	},
 ];
 
 // Simulation without visualisation
@@ -44,9 +65,8 @@ function makeAverageResult(results) {
 	_.forOwn(results[0].result, (value, resultProperty) => {
 		const sum = _.sum(_.pluck(_.pluck(results, 'result'), resultProperty));
 		averagedResult[resultProperty] = sum / results.length;
-
 	});
-	return {options: results[0].options, result: averagedResult};
+	return { options: results[0].options, result: averagedResult };
 }
 
 function doFitnessSuite(codeStr, runCount) {
@@ -54,7 +74,7 @@ function doFitnessSuite(codeStr, runCount) {
 	try {
 		codeObj = getCodeObjFromCode(codeStr);
 	} catch (e) {
-		return {error: `${e}`};
+		return { error: `${e}` };
 	}
 	console.log('Fitness testing code', codeObj);
 	let error = null;
@@ -64,9 +84,10 @@ function doFitnessSuite(codeStr, runCount) {
 		const results = _.map(fitnessChallenges, (challenge) => {
 			const fitness = calculateFitness(challenge, codeObj, 1000.0 / 60.0, 12000);
 			if (fitness.error) {
-				error = fitness.error; return;
+				error = fitness.error;
+				return;
 			}
-			return {options: challenge.options, result: fitness};
+			return { options: challenge.options, result: fitness };
 		});
 		if (error) {
 			return;
@@ -74,14 +95,14 @@ function doFitnessSuite(codeStr, runCount) {
 		testruns.push(results);
 	});
 	if (error) {
-		return {error: `${error}`};
+		return { error: `${error}` };
 	}
 
 	// Now do averaging over all properties for each challenge's test runs
 	const averagedResults = _.map(_.range(testruns[0].length), (n) => {
 		return makeAverageResult(_.pluck(testruns, n));
 	});
-    
+
 	return averagedResults;
 }
 

@@ -1,7 +1,15 @@
-import {getCodeObjFromCode} from '../script/base.js';
-import {challenges} from './challenges.js';
-import {WorldController, WorldCreator} from './world.js';
-import {clearAll, makeDemoFullscreen, presentChallenge, presentCodeStatus, presentFeedback, presentStats, presentWorld} from './presenters.js';
+import { getCodeObjFromCode } from '../script/base.js';
+import { challenges } from './challenges.js';
+import { WorldController, WorldCreator } from './world.js';
+import {
+	clearAll,
+	makeDemoFullscreen,
+	presentChallenge,
+	presentCodeStatus,
+	presentFeedback,
+	presentStats,
+	presentWorld,
+} from './presenters.js';
 
 const createEditor = () => {
 	const lsKey = 'elevatorCrushCode_v5';
@@ -171,12 +179,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		clearAll([$world, $feedback]);
 		presentStats($stats, app.world);
-		presentChallenge($challenge, challenges[challengeIndex], app, app.world, app.worldController, challengeIndex + 1, challengeTempl);
+		presentChallenge(
+			$challenge,
+			challenges[challengeIndex],
+			app,
+			app.world,
+			app.worldController,
+			challengeIndex + 1,
+			challengeTempl,
+		);
 		presentWorld($world, app.world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl);
 
 		app.worldController.on('timescale_changed', () => {
 			localStorage.setItem(tsKey, app.worldController.timeScale);
-			presentChallenge($challenge, challenges[challengeIndex], app, app.world, app.worldController, challengeIndex + 1, challengeTempl);
+			presentChallenge(
+				$challenge,
+				challenges[challengeIndex],
+				app,
+				app.world,
+				app.worldController,
+				challengeIndex + 1,
+				challengeTempl,
+			);
 		});
 
 		app.world.on('stats_changed', () => {
@@ -185,9 +209,23 @@ document.addEventListener('DOMContentLoaded', () => {
 				app.world.challengeEnded = true;
 				app.worldController.setPaused(true);
 				if (challengeStatus) {
-					presentFeedback($feedback, feedbackTempl, app.world, 'Success!', 'Challenge completed', createParamsUrl(params, {challenge: challengeIndex + 2}));
+					presentFeedback(
+						$feedback,
+						feedbackTempl,
+						app.world,
+						'Success!',
+						'Challenge completed',
+						createParamsUrl(params, { challenge: challengeIndex + 2 }),
+					);
 				} else {
-					presentFeedback($feedback, feedbackTempl, app.world, 'Challenge failed', 'Maybe your program needs an improvement?', '');
+					presentFeedback(
+						$feedback,
+						feedbackTempl,
+						app.world,
+						'Challenge failed',
+						'Maybe your program needs an improvement?',
+						'',
+					);
 				}
 			}
 		});
@@ -209,25 +247,34 @@ document.addEventListener('DOMContentLoaded', () => {
 	editor.on('change', () => {
 		$('#fitness_message').addClass('faded');
 		const codeStr = editor.getCode();
-		// fitnessSuite(codeStr, true, function(results) {
-		//     var message = "";
-		//     if(!results.error) {
-		//         message = "Fitness avg wait times: " + _.map(results, function(r){ return r.options.description + ": " + r.result.avgWaitTime.toPrecision(3) + "s" }).join("&nbsp&nbsp&nbsp");
-		//     } else {
-		//         message = "Could not compute fitness due to error: " + results.error;
-		//     }
-		//     $("#fitness_message").html(message).removeClass("faded");
+		// fitnessSuite(codeStr, true, function (results) {
+		// 	var message = '';
+		// 	if (!results.error) {
+		// 		message =
+		// 			'Fitness avg wait times: ' +
+		// 			_.map(results, function (r) {
+		// 				return r.options.description + ': ' + r.result.avgWaitTime.toPrecision(3) + 's';
+		// 			}).join('&nbsp&nbsp&nbsp');
+		// 	} else {
+		// 		message = 'Could not compute fitness due to error: ' + results.error;
+		// 	}
+		// 	$('#fitness_message').html(message).removeClass('faded');
 		// });
 	});
 	editor.trigger('change');
 
 	riot.route((path) => {
-		params = _.reduce(path.split(','), (result, p) => {
-			const match = p.match(/(\w+)=(\w+$)/);
-			if (match) {
-				result[match[1]] = match[2];
-			} return result;
-		}, {});
+		params = _.reduce(
+			path.split(','),
+			(result, p) => {
+				const match = p.match(/(\w+)=(\w+$)/);
+				if (match) {
+					result[match[1]] = match[2];
+				}
+				return result;
+			},
+			{},
+		);
 		let requestedChallenge = 0;
 		let autoStart = false;
 		let timeScale = parseFloat(localStorage.getItem(tsKey)) || 2.0;
@@ -252,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		app.worldController.setTimeScale(timeScale);
 		app.startChallenge(requestedChallenge, autoStart);
 	});
-	
+
 	// Trigger route function above
 	// Not needed when used in a synchronous context (without ES6+ import/export)
 	riot.route('/');

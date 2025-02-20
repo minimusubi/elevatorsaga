@@ -1,13 +1,13 @@
 export default class Floor extends riot.observable {
 	constructor(floorLevel, yPosition, errorHandler) {
 		super();
-        
+
 		this.level = floorLevel;
 		this.yPosition = yPosition;
 		this.errorHandler = errorHandler;
-		this.buttonStates = {up: '', down: ''};
+		this.buttonStates = { up: '', down: '' };
 	}
-	
+
 	tryTrigger(event, ...args) {
 		try {
 			this.trigger(event, ...args);
@@ -15,7 +15,7 @@ export default class Floor extends riot.observable {
 			this.errorHandler(e);
 		}
 	}
-	
+
 	pressUpButton() {
 		const prev = this.buttonStates.up;
 		this.buttonStates.up = 'activated';

@@ -4,10 +4,8 @@ import Floor from './floor.js';
 import User from './user.js';
 
 export class WorldCreator {
-	constructor() {
-		
-	}
-	
+	constructor() {}
+
 	createFloors(floorCount, floorHeight, errorHandler) {
 		const floors = _.map(_.range(floorCount), (e, i) => {
 			const yPos = (floorCount - 1 - i) * floorHeight;
@@ -16,12 +14,17 @@ export class WorldCreator {
 		});
 		return floors;
 	}
-	
+
 	createElevators(elevatorCount, floorCount, floorHeight, elevatorCapacities) {
 		elevatorCapacities = elevatorCapacities || [4];
 		let currentX = 200.0;
 		const elevators = _.map(_.range(elevatorCount), (e, i) => {
-			const elevator = new Elevator(2.6, floorCount, floorHeight, elevatorCapacities[i % elevatorCapacities.length]);
+			const elevator = new Elevator(
+				2.6,
+				floorCount,
+				floorHeight,
+				elevatorCapacities[i % elevatorCapacities.length],
+			);
 
 			// Move to right x position
 			elevator.moveTo(currentX, null);
@@ -68,7 +71,7 @@ export class WorldCreator {
 
 	createWorld(options) {
 		console.log('Creating world with options', options);
-		const defaultOptions = {floorHeight: 50, floorCount: 4, elevatorCount: 2, spawnRate: 0.5};
+		const defaultOptions = { floorHeight: 50, floorCount: 4, elevatorCount: 2, spawnRate: 0.5 };
 		options = _.defaults(_.clone(options), defaultOptions);
 		const world = new riot.observable();
 		world.floorHeight = options.floorHeight;
@@ -79,7 +82,12 @@ export class WorldCreator {
 		};
 
 		world.floors = this.createFloors(options.floorCount, world.floorHeight, handleUserCodeError);
-		world.elevators = this.createElevators(options.elevatorCount, options.floorCount, world.floorHeight, options.elevatorCapacities);
+		world.elevators = this.createElevators(
+			options.elevatorCount,
+			options.floorCount,
+			world.floorHeight,
+			options.elevatorCapacities,
+		);
 		world.elevatorInterfaces = _.map(world.elevators, (e) => {
 			return new ElevatorInterface(e, options.floorCount, handleUserCodeError);
 		});
@@ -95,9 +103,13 @@ export class WorldCreator {
 		const recalculateStats = function () {
 			world.transportedPerSec = world.transportedCounter / world.elapsedTime;
 			// TODO: Optimize this loop?
-			world.moveCount = _.reduce(world.elevators, (sum, elevator) => {
-				return sum + elevator.moveCount;
-			}, 0);
+			world.moveCount = _.reduce(
+				world.elevators,
+				(sum, elevator) => {
+					return sum + elevator.moveCount;
+				},
+				0,
+			);
 			world.trigger('stats_changed');
 		};
 
@@ -109,7 +121,9 @@ export class WorldCreator {
 			user.on('exited_elevator', () => {
 				world.transportedCounter++;
 				world.maxWaitTime = Math.max(world.maxWaitTime, world.elapsedTime - user.spawnTimestamp);
-				world.avgWaitTime = (world.avgWaitTime * (world.transportedCounter - 1) + (world.elapsedTime - user.spawnTimestamp)) / world.transportedCounter;
+				world.avgWaitTime =
+					(world.avgWaitTime * (world.transportedCounter - 1) + (world.elapsedTime - user.spawnTimestamp)) /
+					world.transportedCounter;
 				recalculateStats();
 			});
 			user.updateDisplayPosition(true);
@@ -143,11 +157,17 @@ export class WorldCreator {
 			for (let i = 0, len = world.elevators.length, offset = _.random(len - 1); i < len; ++i) {
 				const elevIndex = (i + offset) % len;
 				const elevator = world.elevators[elevIndex];
-				if (eventName === 'up_button_pressed' && elevator.goingUpIndicator ||
-                    eventName === 'down_button_pressed' && elevator.goingDownIndicator) {
-
+				if (
+					(eventName === 'up_button_pressed' && elevator.goingUpIndicator) ||
+					(eventName === 'down_button_pressed' && elevator.goingDownIndicator)
+				) {
 					// Elevator is heading in correct direction, check for suitability
-					if (elevator.currentFloor === floor.level && elevator.isOnAFloor() && !elevator.isMoving && !elevator.isFull()) {
+					if (
+						elevator.currentFloor === floor.level &&
+						elevator.isOnAFloor() &&
+						!elevator.isMoving &&
+						!elevator.isFull()
+					) {
 						// Potentially suitable to get into
 						// Use the interface queue functionality to queue up this action
 						world.elevatorInterfaces[elevIndex].goToFloor(floor.level, true);
@@ -194,7 +214,7 @@ export class WorldCreator {
 					users.splice(i, 1);
 				}
 			}
-            
+
 			recalculateStats();
 		};
 
@@ -209,9 +229,16 @@ export class WorldCreator {
 
 		world.unWind = function () {
 			console.log('Unwinding', world);
-			_.each(world.elevators.concat(world.elevatorInterfaces).concat(world.users).concat(world.floors).concat([world]), (obj) => {
-				obj.off('*');
-			});
+			_.each(
+				world.elevators
+					.concat(world.elevatorInterfaces)
+					.concat(world.users)
+					.concat(world.floors)
+					.concat([world]),
+				(obj) => {
+					obj.off('*');
+				},
+			);
 			world.challengeEnded = true;
 			world.elevators = world.elevatorInterfaces = world.users = world.floors = [];
 		};
@@ -230,12 +257,12 @@ export class WorldCreator {
 export class WorldController extends riot.observable {
 	constructor(dtMax) {
 		super();
-		
+
 		this.dtMax = dtMax;
 		this.timeScale = 1.0;
 		this.isPaused = true;
 	}
-	
+
 	start(world, codeObj, animationFrameRequester, autoStart) {
 		this.isPaused = true;
 		let lastT = null;

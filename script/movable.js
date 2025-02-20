@@ -1,7 +1,7 @@
 const EPSILON = 0.00001;
 
 const powInterpolate = function (value0, value1, x, a) {
-	return value0 + (value1 - value0) * Math.pow(x, a) / (Math.pow(x, a) + Math.pow(1 - x, a));
+	return value0 + ((value1 - value0) * Math.pow(x, a)) / (Math.pow(x, a) + Math.pow(1 - x, a));
 };
 const coolInterpolate = function (value0, value1, x) {
 	return powInterpolate(value0, value1, x, 1.3);
@@ -13,7 +13,7 @@ const _tmpPosStorage = [0, 0];
 export default class Movable extends unobservable.Observable {
 	constructor() {
 		super();
-		
+
 		this.x = 0.0;
 		this.y = 0.0;
 		this.parent = null;
@@ -23,11 +23,11 @@ export default class Movable extends unobservable.Observable {
 
 		this.trigger('new_state', this);
 	}
-	
+
 	static linearInterpolate(value0, value1, x) {
 		return value0 + (value1 - value0) * x;
 	}
-    
+
 	updateDisplayPosition(forceTrigger) {
 		this.getWorldPosition(_tmpPosStorage);
 		const oldX = this.worldX;
@@ -38,7 +38,7 @@ export default class Movable extends unobservable.Observable {
 			this.trigger('new_display_state', this);
 		}
 	}
-    
+
 	moveTo(newX, newY) {
 		if (newX !== null) {
 			this.x = newX;
@@ -48,24 +48,24 @@ export default class Movable extends unobservable.Observable {
 		}
 		this.trigger('new_state', this);
 	}
-    
+
 	moveToFast(newX, newY) {
 		this.x = newX;
 		this.y = newY;
 		this.trigger('new_state', this);
 	}
-    
+
 	isBusy() {
 		return this.currentTask !== null;
 	}
-    
+
 	makeSureNotBusy() {
 		if (this.isBusy()) {
 			console.error('Attempt to use movable while it was busy', this);
-			throw {message: 'Object is busy - you should use callback', obj: this};
+			throw { message: 'Object is busy - you should use callback', obj: this };
 		}
 	}
-    
+
 	wait(millis, cb) {
 		this.makeSureNotBusy();
 		let timeSpent = 0.0;
@@ -80,7 +80,7 @@ export default class Movable extends unobservable.Observable {
 			}
 		};
 	}
-    
+
 	moveToOverTime(newX, newY, timeToSpend, interpolator, cb) {
 		this.makeSureNotBusy();
 		this.currentTask = true;
@@ -99,7 +99,8 @@ export default class Movable extends unobservable.Observable {
 		const self = this;
 		self.currentTask = function moveToOverTimeTask(dt) {
 			timeSpent = Math.min(timeToSpend, timeSpent + dt);
-			if (timeSpent === timeToSpend) { // Epsilon issues possibly?
+			if (timeSpent === timeToSpend) {
+				// Epsilon issues possibly?
 				self.moveToFast(newX, newY);
 				self.currentTask = null;
 				if (cb) {
@@ -111,13 +112,13 @@ export default class Movable extends unobservable.Observable {
 			}
 		};
 	}
-    
+
 	update(dt) {
 		if (this.currentTask !== null) {
 			this.currentTask(dt);
 		}
 	}
-    
+
 	getWorldPosition(storage) {
 		let resultX = this.x;
 		let resultY = this.y;
@@ -130,7 +131,7 @@ export default class Movable extends unobservable.Observable {
 		storage[0] = resultX;
 		storage[1] = resultY;
 	}
-    
+
 	setParent(movableParent) {
 		const objWorld = [0, 0];
 		if (movableParent === null) {

@@ -1,5 +1,5 @@
-Elevator Saga
-===================
+# Elevator Saga
+
 The elevator programming game
 
 [Play it now!](http://play.elevatorsaga.com/)

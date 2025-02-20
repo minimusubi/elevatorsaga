@@ -1,87 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>Elevator Saga performance tests</title>
-    <meta charset="UTF-8">
+	<head>
+		<title>Elevator Saga performance tests</title>
+		<meta charset="UTF-8" />
 
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif;}
-    </style>
+		<style>
+			body {
+				font-family: Arial, Helvetica, sans-serif;
+			}
+		</style>
 
-    <script type="text/javascript" src="../libs/jquery-2.1.1.min.js"></script>
-    <script type="text/javascript" src="../libs/lodash.min.js"></script>
-    <script type="text/javascript" src="../libs/riot.js"></script>
+		<script type="text/javascript" src="../libs/jquery-2.1.1.min.js"></script>
+		<script type="text/javascript" src="../libs/lodash.min.js"></script>
+		<script type="text/javascript" src="../libs/riot.js"></script>
 
-    <script type="text/javascript" src="../libs/unobservable.js"></script>
-</head>
-<body>
-    <h3>Movable</h3>
-    <div id="results_movable"><h4></h4></div>
-    <h3>Elevator</h3>
-    <div id="results_elevator"><h4></h4></div>
-    <h3>User</h3>
-    <div id="results_user"><h4></h4></div>
-    <h3>Floor</h3>
-    <div id="results_floor"><h4></h4></div>
+		<script type="text/javascript" src="../libs/unobservable.js"></script>
+	</head>
+	<body>
+		<h3>Movable</h3>
+		<div id="results_movable"><h4></h4></div>
+		<h3>Elevator</h3>
+		<div id="results_elevator"><h4></h4></div>
+		<h3>User</h3>
+		<div id="results_user"><h4></h4></div>
+		<h3>Floor</h3>
+		<div id="results_floor"><h4></h4></div>
 
+		<script type="module">
+			import Movable from '../script/movable.js';
+			import Elevator from '../script/elevator.js';
+			import User from '../script/user.js';
 
-    <script type="module">
-        import Movable from '../script/movable.js';
-        import Elevator from '../script/elevator.js';
-        import User from '../script/user.js';
+			const now = function () {
+				// Returns the number of milliseconds elapsed since either the browser navigationStart event or
+				// the UNIX epoch, depending on availability.
+				// Where the browser supports 'performance' we use that as it is more accurate (microsoeconds
+				// will be returned in the fractional part) and more reliable as it does not rely on the system time.
+				// Where 'performance' is not available, we will fall back to Date().getTime().
 
-        const now = function () {
+				// jsFiddle: http://jsfiddle.net/davidwaterston/xCXvJ
 
-            // Returns the number of milliseconds elapsed since either the browser navigationStart event or 
-            // the UNIX epoch, depending on availability.
-            // Where the browser supports 'performance' we use that as it is more accurate (microsoeconds
-            // will be returned in the fractional part) and more reliable as it does not rely on the system time. 
-            // Where 'performance' is not available, we will fall back to Date().getTime().
+				const performance = window.performance || {};
 
-            // jsFiddle: http://jsfiddle.net/davidwaterston/xCXvJ
+				performance.now = (function () {
+					return (
+						performance.now ||
+						performance.webkitNow ||
+						performance.msNow ||
+						performance.oNow ||
+						performance.mozNow ||
+						function () {
+							return new Date().getTime();
+						}
+					);
+				})();
 
-            const performance = window.performance || {};
+				return performance.now();
+			};
 
-            performance.now = (function () {
-                return performance.now ||
-        performance.webkitNow ||
-        performance.msNow ||
-        performance.oNow ||
-        performance.mozNow ||
-        function () {
-            return new Date().getTime();
-        };
-            })();
+			// First blow through the allocation system to make first test more predictable..
+			for (let i = 1000; i > 0; i--) {
+				const m = new Movable();
+				const e = new Elevator(1.5, 4, 40);
+				const u = new User(10, 10, 40);
+			}
 
-            return performance.now();
+			const measure = function (name, numIterations, fn) {
+				const t0 = now();
+				for (let i = numIterations; i > 0; i--) {
+					fn();
+				}
+				const t1 = now();
+				const report = `${name} ${numIterations * 0.001}k times: ${(t1 - t0).toFixed(3)} ms`;
+				return report;
+			};
 
-        };
-
-        // First blow through the allocation system to make first test more predictable..
-        for (let i = 1000; i > 0; i--) {
-            const m = new Movable();
-            const e = new Elevator(1.5, 4, 40);
-            const u = new User(10, 10, 40);
-        }
-
-        const measure = function (name, numIterations, fn) {
-            const t0 = now();
-            for (let i = numIterations; i > 0; i--) {
-                fn();
-            }
-            const t1 = now();
-            const report = `${name} ${numIterations * 0.001}k times: ${(t1 - t0).toFixed(3)} ms`;
-            return report;
-        };
-
-        $('#results_movable h4').append(measure('Creation', 10000, () => {
-            const m = new Movable();
-        }));
-        $('#results_elevator h4').append(measure('Creation', 10000, () => {
-            const e = new Elevator(1.5, 4, 40);
-        }));
-        $('#results_user h4').append(measure('Creation', 10000, () => {
-            const u = new User(10, 10, 40);
-        }));
-    </script>
-</body>
+			$('#results_movable h4').append(
+				measure('Creation', 10000, () => {
+					const m = new Movable();
+				}),
+			);
+			$('#results_elevator h4').append(
+				measure('Creation', 10000, () => {
+					const e = new Elevator(1.5, 4, 40);
+				}),
+			);
+			$('#results_user h4').append(
+				measure('Creation', 10000, () => {
+					const u = new User(10, 10, 40);
+				}),
+			);
+		</script>
+	</body>
+</html>
