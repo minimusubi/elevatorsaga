@@ -53,18 +53,17 @@
 				</p>
 				<h2>Basics</h2>
 				<p>
-					Your code must declare an object containing at least two functions called
-					<span class="emphasis-color">init</span> and <span class="emphasis-color">update</span>. Like this:
+					Your code must export two functions called <span class="emphasis-color">init</span> and
+					<span class="emphasis-color">update</span>. Like this:
 				</p>
 				<div>
-					<pre><code>{
-    init: function(elevators, floors) {
-        // Do stuff with the elevators and floors, which are both arrays of objects
-    },
-    update: function(dt, elevators, floors) {
-        // Do more stuff with the elevators and floors
-        // dt is the number of game seconds that passed since the last time update was called
-    }
+					<pre><code>export function init(elevators, floors) {
+    // Do stuff with the elevators and floors, which are both arrays of objects
+}
+
+export function update(deltaTime, elevators, floors) {
+    // Do more stuff with the elevators and floors
+    // deltaTime is the number of game seconds that passed since the last time update was called
 }</code></pre>
 				</div>
 				<p>
@@ -87,7 +86,9 @@
 						have no effect if the elevator is already queued to go to that floor.
 					</dd>
 					<dt>
-						<pre><code>if(elevator.currentFloor() > 2) { ... }</code></pre>
+						<pre><code>if (elevator.currentFloor() > 2) {
+    // Do something
+}</code></pre>
 					</dt>
 					<dd>
 						Calling currentFloor gets the floor number that the elevator currently is on. Note that this is
@@ -98,21 +99,27 @@
 				<p>It is possible to listen for events, like when stopping at a floor, or a button has been pressed.</p>
 				<dl>
 					<dt>
-						<pre><code>elevator.on("idle", function() { elevator.goToFloor(0); });</code></pre>
+						<pre><code>elevator.on("idle", () => {
+    elevator.goToFloor(0);
+});</code></pre>
 					</dt>
 					<dd>
 						Listen for the "idle" event issued by the elevator, when the task queue has been emptied and the
 						elevator is doing nothing. In this example we tell it to move to floor 0.
 					</dd>
 					<dt>
-						<pre><code>elevator.on("floor_button_pressed", function(floorNum) { ... } );</code></pre>
+						<pre><code>elevator.on("floor_button_pressed", (floorNum) => {
+    // Do something
+});</code></pre>
 					</dt>
 					<dd>
 						Listen for the "floor_button_pressed" event, issued when a passenger pressed a button inside the
 						elevator. This indicates that the passenger wants to go to that floor.
 					</dd>
 					<dt>
-						<pre><code>floor.on("up_button_pressed", function() { ... } );</code></pre>
+						<pre><code>floor.on("up_button_pressed", () => {
+    // Do something
+});</code></pre>
 					</dt>
 					<dd>
 						Listen for the "up_button_pressed" event, issued when a passenger pressed the up button on the
@@ -165,7 +172,7 @@ elevator.goToFloor(2, true); // Do it before anything else</code></pre>
 							<td>function</td>
 							<td><small>Gets the floor number that the elevator currently is on.</small></td>
 							<td>
-								<pre><code>if(elevator.currentFloor() === 0) {
+								<pre><code>if (elevator.currentFloor() === 0) {
     // Do something special?
 }</code></pre>
 							</td>
@@ -180,7 +187,7 @@ elevator.goToFloor(2, true); // Do it before anything else</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>if(elevator.goingUpIndicator()) {
+								<pre><code>if (elevator.goingUpIndicator()) {
     elevator.goingDownIndicator(false);
 }</code></pre>
 							</td>
@@ -195,7 +202,7 @@ elevator.goToFloor(2, true); // Do it before anything else</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>if(elevator.goingDownIndicator()) {
+								<pre><code>if (elevator.goingDownIndicator()) {
     elevator.goingUpIndicator(false);
 }</code></pre>
 							</td>
@@ -210,7 +217,7 @@ elevator.goToFloor(2, true); // Do it before anything else</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>if(elevator.maxPassengerCount() > 5) {
+								<pre><code>if (elevator.maxPassengerCount() > 5) {
     // Use this elevator for something special, because it's big
 }</code></pre>
 							</td>
@@ -225,7 +232,7 @@ elevator.goToFloor(2, true); // Do it before anything else</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>if(elevator.loadFactor() < 0.4) {
+								<pre><code>if (elevator.loadFactor() &lt; 0.4) {
     // Maybe use this elevator, since it's not full yet?
 }</code></pre>
 							</td>
@@ -273,7 +280,7 @@ elevator.checkDestinationQueue();</code></pre>
 							<td>function</td>
 							<td><small>Gets the currently pressed floor numbers as an array.</small></td>
 							<td>
-								<pre><code>if(elevator.getPressedFloors().length > 0) {
+								<pre><code>if (elevator.getPressedFloors().length > 0) {
     // Maybe go to some chosen floor first?
 }</code></pre>
 							</td>
@@ -296,16 +303,18 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("idle", function() { ... });</code></pre>
+								<pre><code>elevator.on("idle", () => {
+    // Do something
+});</code></pre>
 							</td>
 						</tr>
 						<tr>
 							<td>floor_button_pressed</td>
 							<td><small>Triggered when a passenger has pressed a button inside the elevator.</small></td>
 							<td>
-								<pre><code>elevator.on("floor_button_pressed", function(floorNum) {
+								<pre><code>elevator.on("floor_button_pressed", (floorNum) => {
     // Maybe tell the elevator to go to that floor?
-})</code></pre>
+});</code></pre>
 							</td>
 						</tr>
 						<tr>
@@ -318,16 +327,18 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("passing_floor", function(floorNum, direction) { ... });</code></pre>
+								<pre><code>elevator.on("passing_floor", (floorNum, direction) => {
+    // Do something
+});</code></pre>
 							</td>
 						</tr>
 						<tr>
 							<td>stopped_at_floor</td>
 							<td><small>Triggered when the elevator has arrived at a floor.</small></td>
 							<td>
-								<pre><code>elevator.on("stopped_at_floor", function(floorNum) {
+								<pre><code>elevator.on("stopped_at_floor", (floorNum) => {
     // Maybe decide where to go next?
-})</code></pre>
+});</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -346,7 +357,9 @@ elevator.checkDestinationQueue();</code></pre>
 							<td>function</td>
 							<td><small>Gets the floor number of the floor object.</small></td>
 							<td>
-								<pre><code>if(floor.floorNum() > 3) { ... }</code></pre>
+								<pre><code>if (floor.floorNum() > 3) {
+    // Do something
+}</code></pre>
 							</td>
 						</tr>
 					</tbody>
@@ -367,9 +380,9 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>floor.on("up_button_pressed", function() {
+								<pre><code>floor.on("up_button_pressed", () => {
     // Maybe tell an elevator to go to this floor?
-})</code></pre>
+});</code></pre>
 							</td>
 						</tr>
 						<tr>
@@ -381,17 +394,17 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>floor.on("down_button_pressed", function() {
+								<pre><code>floor.on("down_button_pressed", () => {
     // Maybe tell an elevator to go to this floor?
-})</code></pre>
+});</code></pre>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 			<div class="footer">
-				<h4>Made by Magnus Wolffelt and contributors</h4>
-				<h4><a href="https://github.com/magwo/elevatorsaga">Source code</a> on GitHub</h4>
+				<h4>Original by Magnus Wolffelt and contributors. This version forked by minimusubi.</h4>
+				<h4><a href="https://github.com/minimusubi/elevatorsaga">Source code</a> on GitHub</h4>
 			</div>
 		</div>
 
