@@ -23,9 +23,9 @@ describe('Elevator Saga', () => {
 	let handlers = null;
 	beforeEach(() => {
 		handlers = { someHandler: function () {}, someOtherHandler: function () {} };
-		$.each(handlers, (key, value) => {
+		for (const [key, value] of Object.entries(handlers)) {
 			spyOn(handlers, key).and.callThrough();
-		});
+		}
 	});
 
 	describe('Movable class', () => {

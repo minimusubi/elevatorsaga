@@ -7,7 +7,7 @@ export default [
 	eslintConfigPrettier,
 	{
 		languageOptions: {
-			globals: { ...globals.browser, $: true, _: true, riot: true },
+			globals: { ...globals.browser, _: true, riot: true },
 
 			ecmaVersion: 'latest',
 			sourceType: 'module',

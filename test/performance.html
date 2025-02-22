@@ -10,7 +10,6 @@
 			}
 		</style>
 
-		<script type="text/javascript" src="../libs/jquery-2.1.1.min.js"></script>
 		<script type="text/javascript" src="../libs/lodash.min.js"></script>
 		<script type="text/javascript" src="../libs/riot.js"></script>
 
@@ -75,21 +74,15 @@
 				return report;
 			};
 
-			$('#results_movable h4').append(
-				measure('Creation', 10000, () => {
-					const m = new Movable();
-				}),
-			);
-			$('#results_elevator h4').append(
-				measure('Creation', 10000, () => {
-					const e = new Elevator(1.5, 4, 40);
-				}),
-			);
-			$('#results_user h4').append(
-				measure('Creation', 10000, () => {
-					const u = new User(10, 10, 40);
-				}),
-			);
+			document.querySelector('#results_movable h4').textContent = measure('Creation', 10000, () => {
+				const m = new Movable();
+			});
+			document.querySelector('#results_elevator h4').textContent = measure('Creation', 10000, () => {
+				const e = new Elevator(1.5, 4, 40);
+			});
+			document.querySelector('#results_user h4').textContent = measure('Creation', 10000, () => {
+				const u = new User(10, 10, 40);
+			});
 		</script>
 	</body>
 </html>

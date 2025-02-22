@@ -51,11 +51,11 @@ const createEditor = () => {
 	});
 
 	const reset = function () {
-		cm.setValue($('#default-elev-implementation').text().trim());
+		cm.setValue(document.querySelector('#default-elev-implementation').textContent.trim());
 	};
 	const saveCode = function () {
 		localStorage.setItem(lsKey, cm.getValue());
-		$('#save_message').text(`Code saved ${new Date().toTimeString()}`);
+		document.querySelector('#save_message').textContent = `Code saved ${new Date().toTimeString()}`;
 		returnObj.trigger('change');
 	};
 
@@ -66,12 +66,12 @@ const createEditor = () => {
 		reset();
 	}
 
-	$('#button_save').click(() => {
+	document.querySelector('#button_save').addEventListener('click', () => {
 		saveCode();
 		cm.focus();
 	});
 
-	$('#button_reset').click(() => {
+	document.querySelector('#button_reset').addEventListener('click', () => {
 		if (confirm('Do you really want to reset to the default implementation?')) {
 			localStorage.setItem('develevateBackupCode', cm.getValue());
 			reset();
@@ -79,7 +79,7 @@ const createEditor = () => {
 		cm.focus();
 	});
 
-	$('#button_resetundo').click(() => {
+	document.querySelector('#button_resetundo').addEventListener('click', () => {
 		if (confirm('Do you want to bring back the code as before the last reset?')) {
 			cm.setValue(localStorage.getItem('develevateBackupCode') || '');
 		}
@@ -112,10 +112,10 @@ const createEditor = () => {
 		return cm.getValue();
 	};
 	returnObj.setDevTestCode = function () {
-		cm.setValue($('#devtest-elev-implementation').text().trim());
+		cm.setValue(document.querySelector('#devtest-elev-implementation').textContent.trim());
 	};
 
-	$('#button_apply').click(() => {
+	document.querySelector('#button_apply').addEventListener('click', () => {
 		returnObj.trigger('apply_code');
 	});
 	return returnObj;
@@ -133,11 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	let params = {};
 
-	const $world = $('.innerworld');
-	const $stats = $('.statscontainer');
-	const $feedback = $('.feedbackcontainer');
-	const $challenge = $('.challenge');
-	const $codestatus = $('.codestatus');
+	const innerWorld = document.querySelector('.innerworld');
+	const stats = document.querySelector('.statscontainer');
+	const feedback = document.querySelector('.feedbackcontainer');
+	const challenge = document.querySelector('.challenge');
+	const codestatus = document.querySelector('.codestatus');
 
 	const floorTempl = document.getElementById('floor-template').innerHTML.trim();
 	const elevatorTempl = document.getElementById('elevator-template').innerHTML.trim();
@@ -177,10 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		app.world = app.worldCreator.createWorld(challenges[challengeIndex].options);
 		window.world = app.world;
 
-		clearAll([$world, $feedback]);
-		presentStats($stats, app.world);
+		clearAll([innerWorld, feedback]);
+		presentStats(stats, app.world);
 		presentChallenge(
-			$challenge,
+			challenge,
 			challenges[challengeIndex],
 			app,
 			app.world,
@@ -188,12 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			challengeIndex + 1,
 			challengeTempl,
 		);
-		presentWorld($world, app.world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl);
+		presentWorld(innerWorld, app.world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl);
 
 		app.worldController.on('timescale_changed', () => {
 			localStorage.setItem(tsKey, app.worldController.timeScale);
 			presentChallenge(
-				$challenge,
+				challenge,
 				challenges[challengeIndex],
 				app,
 				app.world,
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				app.worldController.setPaused(true);
 				if (challengeStatus) {
 					presentFeedback(
-						$feedback,
+						feedback,
 						feedbackTempl,
 						app.world,
 						'Success!',
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					);
 				} else {
 					presentFeedback(
-						$feedback,
+						feedback,
 						feedbackTempl,
 						app.world,
 						'Challenge failed',
@@ -239,13 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		app.startChallenge(app.currentChallengeIndex, true);
 	});
 	editor.on('code_success', () => {
-		presentCodeStatus($codestatus, codeStatusTempl);
+		presentCodeStatus(codestatus, codeStatusTempl);
 	});
 	editor.on('usercode_error', (error) => {
-		presentCodeStatus($codestatus, codeStatusTempl, error);
+		presentCodeStatus(codestatus, codeStatusTempl, error);
 	});
 	editor.on('change', () => {
-		$('#fitness_message').addClass('faded');
+		document.querySelector('#fitness_message').classList.add('faded');
 		const codeStr = editor.getCode();
 		// fitnessSuite(codeStr, true, function (results) {
 		// 	var message = '';
@@ -258,7 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		// 	} else {
 		// 		message = 'Could not compute fitness due to error: ' + results.error;
 		// 	}
-		// 	$('#fitness_message').html(message).removeClass('faded');
+		// 	document.querySelector('#fitness_message').innerHTML = message
+		// 	document.querySelector('#fitness_message').classList.remove('faded');
 		// });
 	});
 	editor.trigger('change');

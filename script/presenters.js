@@ -1,7 +1,14 @@
-export function clearAll($elems) {
-	_.each($elems, ($elem) => {
-		$elem.empty();
-	});
+function makeFragment(html) {
+	const container = document.createElement('template');
+	container.innerHTML = html;
+
+	return container.content.cloneNode(true);
+}
+
+export function clearAll(elements) {
+	for (const element of elements) {
+		element.replaceChildren();
+	}
 }
 
 function setTransformPos(elem, x, y) {
@@ -11,20 +18,20 @@ function setTransformPos(elem, x, y) {
 	elem.style['-webkit-transform'] = style;
 }
 
-function updateUserState($user, elem_user, user) {
-	setTransformPos(elem_user, user.worldX, user.worldY);
+function updateUserState(userElement, user) {
+	setTransformPos(userElement, user.worldX, user.worldY);
 	if (user.done) {
-		$user.addClass('leaving');
+		userElement.classList.add('leaving');
 	}
 }
 
-export function presentStats($parent, world) {
-	const elem_transportedcounter = $parent.find('.transportedcounter').get(0),
-		elem_elapsedtime = $parent.find('.elapsedtime').get(0),
-		elem_transportedpersec = $parent.find('.transportedpersec').get(0),
-		elem_avgwaittime = $parent.find('.avgwaittime').get(0),
-		elem_maxwaittime = $parent.find('.maxwaittime').get(0),
-		elem_movecount = $parent.find('.movecount').get(0);
+export function presentStats(parent, world) {
+	const elem_transportedcounter = parent.querySelector('.transportedcounter'),
+		elem_elapsedtime = parent.querySelector('.elapsedtime'),
+		elem_transportedpersec = parent.querySelector('.transportedpersec'),
+		elem_avgwaittime = parent.querySelector('.avgwaittime'),
+		elem_maxwaittime = parent.querySelector('.maxwaittime'),
+		elem_movecount = parent.querySelector('.movecount');
 
 	world.on('stats_display_changed', () => {
 		elem_transportedcounter.textContent = world.transportedCounter;
@@ -37,75 +44,69 @@ export function presentStats($parent, world) {
 	world.trigger('stats_display_changed');
 }
 
-export function presentChallenge($parent, challenge, app, world, worldController, challengeNum, challengeTempl) {
-	const $challenge = $(
-		riot.render(challengeTempl, {
-			challenge: challenge,
-			num: challengeNum,
-			timeScale: `${worldController.timeScale.toFixed(0)}x`,
-			startButtonText: world.challengeEnded
-				? "<i class='fa fa-repeat'></i> Restart"
-				: worldController.isPaused
-					? 'Start'
-					: 'Pause',
-		}),
-	);
-	$parent.html($challenge);
+export function presentChallenge(parent, challenge, app, world, worldController, challengeNum, challengeTempl) {
+	parent.innerHTML = riot.render(challengeTempl, {
+		challenge: challenge,
+		num: challengeNum,
+		timeScale: `${worldController.timeScale.toFixed(0)}x`,
+		startButtonText: world.challengeEnded
+			? "<i class='fa fa-repeat'></i> Restart"
+			: worldController.isPaused
+				? 'Start'
+				: 'Pause',
+	});
 
-	$parent.find('.startstop').on('click', () => {
+	parent.querySelector('.startstop').addEventListener('click', () => {
 		app.startStopOrRestart();
 	});
-	$parent.find('.timescale_increase').on('click', (e) => {
+	parent.querySelector('.timescale_increase').addEventListener('click', (e) => {
 		e.preventDefault();
 		if (worldController.timeScale < 40) {
 			const timeScale = Math.round(worldController.timeScale * 1.618);
 			worldController.setTimeScale(timeScale);
 		}
 	});
-	$parent.find('.timescale_decrease').on('click', (e) => {
+	parent.querySelector('.timescale_decrease').addEventListener('click', (e) => {
 		e.preventDefault();
 		const timeScale = Math.round(worldController.timeScale / 1.618);
 		worldController.setTimeScale(timeScale);
 	});
 }
 
-export function presentFeedback($parent, feedbackTempl, world, title, message, url) {
-	$parent.html(
-		riot.render(feedbackTempl, {
-			title: title,
-			message: message,
-			url: url,
-			paddingTop: world.floors.length * world.floorHeight * 0.2,
-		}),
-	);
+export function presentFeedback(parent, feedbackTempl, world, title, message, url) {
+	parent.innerHTML = riot.render(feedbackTempl, {
+		title: title,
+		message: message,
+		url: url,
+		paddingTop: world.floors.length * world.floorHeight * 0.2,
+	});
 	if (!url) {
-		$parent.find('a').remove();
+		parent.querySelector('a').remove();
 	}
 }
 
-export function presentWorld($world, world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl) {
-	$world.css('height', world.floorHeight * world.floors.length);
+export function presentWorld(worldElement, world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl) {
+	worldElement.style.height = `${world.floorHeight * world.floors.length}px`;
 
-	$world.append(
-		_.map(world.floors, (f) => {
-			const $floor = $(riot.render(floorTempl, f));
-			const $up = $floor.find('.up');
-			const $down = $floor.find('.down');
-			f.on('buttonstate_change', (buttonStates) => {
-				$up.toggleClass('activated', buttonStates.up !== '');
-				$down.toggleClass('activated', buttonStates.down !== '');
-			});
-			$up.on('click', () => {
-				f.pressUpButton();
-			});
-			$down.on('click', () => {
-				f.pressDownButton();
-			});
-			return $floor;
-		}),
-	);
-	$world.find('.floor').first().find('.down').addClass('invisible');
-	$world.find('.floor').last().find('.up').addClass('invisible');
+	for (const floor of world.floors) {
+		const floorFragment = makeFragment(riot.render(floorTempl, floor));
+		const up = floorFragment.querySelector('.up');
+		const down = floorFragment.querySelector('.down');
+		floor.on('buttonstate_change', (buttonStates) => {
+			up.classList.toggle('activated', buttonStates.up !== '');
+			down.classList.toggle('activated', buttonStates.down !== '');
+		});
+		up.addEventListener('click', () => {
+			floor.pressUpButton();
+		});
+		down.addEventListener('click', () => {
+			floor.pressDownButton();
+		});
+		worldElement.appendChild(floorFragment);
+	}
+
+	worldElement.querySelector('.floor:first-of-type .down').classList.add('invisible');
+	worldElement.querySelector('.floor:last-of-type .up').classList.add('invisible');
 
 	function renderElevatorButtons(states) {
 		// This is a rarely executed inner-inner loop, does not need efficiency
@@ -114,58 +115,58 @@ export function presentWorld($world, world, floorTempl, elevatorTempl, elevatorB
 		}).join('');
 	}
 
-	function setUpElevator(e) {
-		const $elevator = $(riot.render(elevatorTempl, { e: e }));
-		const elem_elevator = $elevator.get(0);
-		$elevator.find('.buttonindicator').html(renderElevatorButtons(e.buttonStates));
-		const $buttons = _.map($elevator.find('.buttonindicator').children(), (c) => {
-			return $(c);
-		});
-		const elem_floorindicator = $elevator.find('.floorindicator > span').get(0);
+	function setUpElevator(elevator) {
+		const elevatorElement = makeFragment(riot.render(elevatorTempl, { e: elevator })).firstChild;
+		elevatorElement.querySelector('.buttonindicator').innerHTML = renderElevatorButtons(elevator.buttonStates);
+		const buttons = elevatorElement.querySelector('.buttonindicator').children;
+		const elem_floorindicator = elevatorElement.querySelector('.floorindicator > span');
 
-		$elevator.on('click', '.buttonpress', function () {
-			e.pressFloorButton(parseInt($(this).text()));
+		elevatorElement.addEventListener('click', (event) => {
+			if (!event.target.classList.has('buttonpress')) {
+				return;
+			}
+
+			elevator.pressFloorButton(parseInt(event.target.textContent));
 		});
-		e.on('new_display_state', () => {
-			setTransformPos(elem_elevator, e.worldX, e.worldY);
+		elevator.on('new_display_state', () => {
+			setTransformPos(elevatorElement, elevator.worldX, elevator.worldY);
 		});
-		e.on('new_current_floor', (floor) => {
+		elevator.on('new_current_floor', (floor) => {
 			elem_floorindicator.textContent = floor;
 		});
-		e.on('floor_buttons_changed', (states, indexChanged) => {
-			$buttons[indexChanged].toggleClass('activated', states[indexChanged]);
+		elevator.on('floor_buttons_changed', (states, indexChanged) => {
+			buttons[indexChanged].classList.toggle('activated', states[indexChanged]);
 		});
-		e.on('indicatorstate_change', (indicatorStates) => {
-			$elevator.find('.up').toggleClass('activated', indicatorStates.up);
-			$elevator.find('.down').toggleClass('activated', indicatorStates.down);
+		elevator.on('indicatorstate_change', (indicatorStates) => {
+			elevatorElement.querySelector('.up').classList.toggle('activated', indicatorStates.up);
+			elevatorElement.querySelector('.down').classList.toggle('activated', indicatorStates.down);
 		});
-		e.trigger('new_state', e);
-		e.trigger('new_display_state', e);
-		e.trigger('new_current_floor', e.currentFloor);
-		return $elevator;
+		elevator.trigger('new_state', elevator);
+		elevator.trigger('new_display_state', elevator);
+		elevator.trigger('new_current_floor', elevator.currentFloor);
+		return elevatorElement;
 	}
 
-	$world.append(
-		_.map(world.elevators, (e) => {
-			return setUpElevator(e);
-		}),
-	);
+	for (const elevator of world.elevators) {
+		worldElement.appendChild(setUpElevator(elevator));
+	}
 
 	world.on('new_user', (user) => {
-		const $user = $(riot.render(userTempl, { u: user, state: user.done ? 'leaving' : '' }));
-		const elem_user = $user.get(0);
+		const userElement = makeFragment(
+			riot.render(userTempl, { u: user, state: user.done ? 'leaving' : '' }),
+		).firstChild;
 
 		user.on('new_display_state', () => {
-			updateUserState($user, elem_user, user);
+			updateUserState(userElement, user);
 		});
 		user.on('removed', () => {
-			$user.remove();
+			userElement.remove();
 		});
-		$world.append($user);
+		worldElement.append(userElement);
 	});
 }
 
-export function presentCodeStatus($parent, templ, error) {
+export function presentCodeStatus(parent, templ, error) {
 	console.log(error);
 	const errorDisplay = error ? 'block' : 'none';
 	const successDisplay = error ? 'none' : 'block';
@@ -179,10 +180,17 @@ export function presentCodeStatus($parent, templ, error) {
 		errorDisplay: errorDisplay,
 		successDisplay: successDisplay,
 	});
-	$parent.html(status);
+	parent.innerHTML = status;
 }
 
 export function makeDemoFullscreen() {
-	$('body .container > *').not('.world').css('visibility', 'hidden');
-	$('html, body, body .container, .world').css({ width: '100%', margin: '0', padding: 0 });
+	for (const element of document.querySelectorAll('body .container > *:not(.world)')) {
+		element.style.visibility = 'hidden';
+	}
+
+	for (const element of document.querySelectorAll('html, body, body .container, .world')) {
+		element.style.width = '100%';
+		element.style.margin = 0;
+		element.style.padding = 0;
+	}
 }
