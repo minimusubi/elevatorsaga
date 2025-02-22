@@ -1,3 +1,5 @@
+import Emitter from './emitter.js';
+
 const EPSILON = 0.00001;
 
 const powInterpolate = function (value0, value1, x, a) {
@@ -10,7 +12,7 @@ const DEFAULT_INTERPOLATOR = coolInterpolate;
 
 const _tmpPosStorage = [0, 0];
 
-export default class Movable extends unobservable.Observable {
+export default class Movable extends Emitter {
 	constructor() {
 		super();
 

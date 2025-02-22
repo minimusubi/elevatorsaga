@@ -1,5 +1,5 @@
 // TODO: use js modules? will not work with ES6+ refactor
-importScripts('libs/lodash.min.js', 'libs/riot.js', 'libs/unobservable.js');
+importScripts('libs/lodash.min.js', 'libs/riot.js');
 importScripts(
 	'script/base.js',
 	'script/movable.js',
