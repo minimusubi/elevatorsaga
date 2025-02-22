@@ -303,5 +303,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Trigger route function above
 	// Not needed when used in a synchronous context (without ES6+ import/export)
-	riot.route('/');
+	riot.route(location.pathname);
 });
