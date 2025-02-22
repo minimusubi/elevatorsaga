@@ -10,6 +10,7 @@ import {
 	presentStats,
 	presentWorld,
 } from './presenters.js';
+import { getCodeTemplate, getTemplate } from './util.js';
 
 const createEditor = () => {
 	const lsKey = 'elevatorCrushCode_v5';
@@ -51,7 +52,7 @@ const createEditor = () => {
 	});
 
 	const reset = function () {
-		cm.setValue(document.querySelector('#default-elev-implementation').textContent.trim());
+		cm.setValue(getCodeTemplate('default-elev-implementation'));
 	};
 	const saveCode = function () {
 		localStorage.setItem(lsKey, cm.getValue());
@@ -112,7 +113,7 @@ const createEditor = () => {
 		return cm.getValue();
 	};
 	returnObj.setDevTestCode = function () {
-		cm.setValue(document.querySelector('#devtest-elev-implementation').textContent.trim());
+		cm.setValue(getCodeTemplate('devtest-elev-implementation'));
 	};
 
 	document.querySelector('#button_apply').addEventListener('click', () => {
@@ -139,13 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	const challenge = document.querySelector('.challenge');
 	const codestatus = document.querySelector('.codestatus');
 
-	const floorTempl = document.getElementById('floor-template').innerHTML.trim();
-	const elevatorTempl = document.getElementById('elevator-template').innerHTML.trim();
-	const elevatorButtonTempl = document.getElementById('elevatorbutton-template').innerHTML.trim();
-	const userTempl = document.getElementById('user-template').innerHTML.trim();
-	const challengeTempl = document.getElementById('challenge-template').innerHTML.trim();
-	const feedbackTempl = document.getElementById('feedback-template').innerHTML.trim();
-	const codeStatusTempl = document.getElementById('codestatus-template').innerHTML.trim();
+	const floorTempl = getTemplate('floor-template');
+	const elevatorTempl = getTemplate('elevator-template');
+	const elevatorButtonTempl = getTemplate('elevatorbutton-template');
+	const userTempl = getTemplate('user-template');
+	const challengeTempl = getTemplate('challenge-template');
+	const feedbackTempl = getTemplate('feedback-template');
+	const codeStatusTempl = getTemplate('codestatus-template');
 
 	const app = new riot.observable();
 	app.worldController = new WorldController(1.0 / 60.0);
