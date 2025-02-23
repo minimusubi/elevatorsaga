@@ -1,6 +1,38 @@
+import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
+import * as prettierPluginBabel from 'https://unpkg.com/prettier@3.5.2/plugins/babel.mjs';
+import * as prettierPluginEstree from 'https://unpkg.com/prettier@3.5.2/plugins/estree.mjs';
 import config from './config.js';
 import { getCodeObjFromCode } from '../script/base.js';
 import { getCodeTemplate } from './util.js';
+
+async function format(code) {
+	return await prettier.format(code, {
+		parser: 'babel',
+		plugins: [prettierPluginEstree, prettierPluginBabel],
+
+		arrowParens: 'always',
+		bracketSameLine: false,
+		objectWrap: 'collapse',
+		bracketSpacing: true,
+		semi: true,
+		experimentalOperatorPosition: 'end',
+		experimentalTernaries: false,
+		singleQuote: true,
+		jsxSingleQuote: true,
+		quoteProps: 'as-needed',
+		trailingComma: 'all',
+		singleAttributePerLine: false,
+		htmlWhitespaceSensitivity: 'css',
+		vueIndentScriptAndStyle: true,
+		proseWrap: 'preserve',
+		insertPragma: false,
+		printWidth: 80,
+		requirePragma: false,
+		tabWidth: 4,
+		useTabs: true,
+		embeddedLanguageFormatting: 'auto',
+	});
+}
 
 export const createEditor = () => {
 	const cm = CodeMirror.fromTextArea(document.getElementById('code'), {
@@ -72,6 +104,11 @@ export const createEditor = () => {
 		if (confirm('Do you want to bring back the code as before the last reset?')) {
 			cm.setValue(localStorage.getItem(config.STORAGE_KEY_USERCODE_BACKUP) || '');
 		}
+		cm.focus();
+	});
+
+	document.querySelector('#button_format').addEventListener('click', async () => {
+		cm.setValue((await format(cm.getValue())) || '');
 		cm.focus();
 	});
 
