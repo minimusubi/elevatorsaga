@@ -127,7 +127,7 @@ button.right {
 #save_message,
 #fitness_message {
 	color: #555;
-	font-size: 12px;
+	/* font-size: 12px; */
 	line-height: 30px;
 	margin: 0 20px;
 }

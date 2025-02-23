@@ -44,7 +44,7 @@ export const createEditor = () => {
 	};
 	const saveCode = function () {
 		localStorage.setItem(config.STORAGE_KEY_USERCODE, cm.getValue());
-		document.querySelector('#save_message').textContent = `Code saved ${new Date().toTimeString()}`;
+		document.querySelector('#save_message').textContent = `Code saved ${new Date().toLocaleTimeString()}`;
 		returnObj.trigger('change');
 	};
 
