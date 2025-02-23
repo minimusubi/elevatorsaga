@@ -1,4 +1,3 @@
-import { getCodeObjFromCode } from '../script/base.js';
 import { challenges } from './challenges.js';
 import { WorldController, WorldCreator } from './world.js';
 import {
@@ -10,121 +9,12 @@ import {
 	presentStats,
 	presentWorld,
 } from './presenters.js';
-import { getCodeTemplate, getTemplate } from './util.js';
+import { getTemplate } from './util.js';
 import Emitter from './emitter.js';
+import config from './config.js';
+import { createEditor } from './editor.js';
 
-const STORAGE_TIMESCALE_KEY = 'elevatorTimeScale';
-const STORAGE_USERCODE_KEY = 'elevatorCrushCode_v5';
-const STORAGE_USERCODE_BACKUP_KEY = 'develevateBackupCode';
 let params = {};
-
-const createEditor = () => {
-	const cm = CodeMirror.fromTextArea(document.getElementById('code'), {
-		lineNumbers: true,
-		indentUnit: 4,
-		indentWithTabs: false,
-		theme: 'solarized light',
-		mode: 'javascript',
-		autoCloseBrackets: true,
-		extraKeys: {
-			// the following Tab key mapping is from http://codemirror.net/doc/manual.html#keymaps
-			Tab: function (cm) {
-				const spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-				cm.replaceSelection(spaces);
-			},
-		},
-	});
-
-	// reindent on paste (adapted from https://github.com/ahuth/brackets-paste-and-indent/blob/master/main.js)
-	cm.on('change', (codeMirror, change) => {
-		if (change.origin !== 'paste') {
-			return;
-		}
-
-		const lineFrom = change.from.line;
-		const lineTo = change.from.line + change.text.length;
-
-		function reindentLines() {
-			codeMirror.operation(() => {
-				codeMirror.eachLine(lineFrom, lineTo, (lineHandle) => {
-					codeMirror.indentLine(lineHandle.lineNo(), 'smart');
-				});
-			});
-		}
-
-		reindentLines();
-	});
-
-	const reset = function () {
-		cm.setValue(getCodeTemplate('default-elev-implementation'));
-	};
-	const saveCode = function () {
-		localStorage.setItem(STORAGE_USERCODE_KEY, cm.getValue());
-		document.querySelector('#save_message').textContent = `Code saved ${new Date().toTimeString()}`;
-		returnObj.trigger('change');
-	};
-
-	const existingCode = localStorage.getItem(STORAGE_USERCODE_KEY);
-	if (existingCode) {
-		cm.setValue(existingCode);
-	} else {
-		reset();
-	}
-
-	document.querySelector('#button_save').addEventListener('click', () => {
-		saveCode();
-		cm.focus();
-	});
-
-	document.querySelector('#button_reset').addEventListener('click', () => {
-		if (confirm('Do you really want to reset to the default implementation?')) {
-			localStorage.setItem(STORAGE_USERCODE_BACKUP_KEY, cm.getValue());
-			reset();
-		}
-		cm.focus();
-	});
-
-	document.querySelector('#button_resetundo').addEventListener('click', () => {
-		if (confirm('Do you want to bring back the code as before the last reset?')) {
-			cm.setValue(localStorage.getItem(STORAGE_USERCODE_BACKUP_KEY) || '');
-		}
-		cm.focus();
-	});
-
-	const returnObj = new riot.observable();
-	const autoSaver = _.debounce(saveCode, 1000);
-	cm.on('change', () => {
-		autoSaver();
-	});
-
-	returnObj.getCodeObj = async function () {
-		console.log('Getting code...');
-		const code = cm.getValue();
-		let obj;
-		try {
-			obj = await getCodeObjFromCode(code);
-			returnObj.trigger('code_success');
-		} catch (e) {
-			returnObj.trigger('usercode_error', e);
-			return null;
-		}
-		return obj;
-	};
-	returnObj.setCode = function (code) {
-		cm.setValue(code);
-	};
-	returnObj.getCode = function () {
-		return cm.getValue();
-	};
-	returnObj.setDevTestCode = function () {
-		cm.setValue(getCodeTemplate('devtest-elev-implementation'));
-	};
-
-	document.querySelector('#button_apply').addEventListener('click', () => {
-		returnObj.trigger('apply_code');
-	});
-	return returnObj;
-};
 
 const createParamsUrl = function (current, overrides) {
 	return `#${_.map(_.merge(current, overrides), (val, key) => {
@@ -203,7 +93,7 @@ class App extends Emitter {
 		);
 
 		this.worldController.on('timescale_changed', () => {
-			localStorage.setItem(STORAGE_TIMESCALE_KEY, this.worldController.timeScale);
+			localStorage.setItem(config.STORAGE_KEY_TIMESCALE, this.worldController.timeScale);
 			presentChallenge(
 				this.element.challenge,
 				challenges[challengeIndex],
@@ -299,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		);
 		let requestedChallenge = 0;
 		let autoStart = false;
-		let timeScale = parseFloat(localStorage.getItem(STORAGE_TIMESCALE_KEY)) || 2.0;
+		let timeScale = parseFloat(localStorage.getItem(config.STORAGE_KEY_TIMESCALE)) || 2.0;
 		_.each(params, (val, key) => {
 			if (key === 'challenge') {
 				requestedChallenge = _.parseInt(val) - 1;
