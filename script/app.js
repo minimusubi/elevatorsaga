@@ -285,8 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	editor.trigger('change');
 
 	riot.route((path) => {
+		const hash = path.match(/#(.+)/)?.[1] ?? '';
 		params = _.reduce(
-			path.split(','),
+			hash.split(','),
 			(result, p) => {
 				const match = p.match(/(\w+)=(\w+$)/);
 				if (match) {
@@ -323,5 +324,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Trigger route function above
 	// Not needed when used in a synchronous context (without ES6+ import/export)
-	riot.route(location.pathname);
+	riot.route(location.pathname + location.hash);
 });
