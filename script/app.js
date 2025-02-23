@@ -11,10 +11,14 @@ import {
 	presentWorld,
 } from './presenters.js';
 import { getCodeTemplate, getTemplate } from './util.js';
+import Emitter from './emitter.js';
+
+const STORAGE_TIMESCALE_KEY = 'elevatorTimeScale';
+const STORAGE_USERCODE_KEY = 'elevatorCrushCode_v5';
+const STORAGE_USERCODE_BACKUP_KEY = 'develevateBackupCode';
+let params = {};
 
 const createEditor = () => {
-	const lsKey = 'elevatorCrushCode_v5';
-
 	const cm = CodeMirror.fromTextArea(document.getElementById('code'), {
 		lineNumbers: true,
 		indentUnit: 4,
@@ -55,12 +59,12 @@ const createEditor = () => {
 		cm.setValue(getCodeTemplate('default-elev-implementation'));
 	};
 	const saveCode = function () {
-		localStorage.setItem(lsKey, cm.getValue());
+		localStorage.setItem(STORAGE_USERCODE_KEY, cm.getValue());
 		document.querySelector('#save_message').textContent = `Code saved ${new Date().toTimeString()}`;
 		returnObj.trigger('change');
 	};
 
-	const existingCode = localStorage.getItem(lsKey);
+	const existingCode = localStorage.getItem(STORAGE_USERCODE_KEY);
 	if (existingCode) {
 		cm.setValue(existingCode);
 	} else {
@@ -74,7 +78,7 @@ const createEditor = () => {
 
 	document.querySelector('#button_reset').addEventListener('click', () => {
 		if (confirm('Do you really want to reset to the default implementation?')) {
-			localStorage.setItem('develevateBackupCode', cm.getValue());
+			localStorage.setItem(STORAGE_USERCODE_BACKUP_KEY, cm.getValue());
 			reset();
 		}
 		cm.focus();
@@ -82,7 +86,7 @@ const createEditor = () => {
 
 	document.querySelector('#button_resetundo').addEventListener('click', () => {
 		if (confirm('Do you want to bring back the code as before the last reset?')) {
-			cm.setValue(localStorage.getItem('develevateBackupCode') || '');
+			cm.setValue(localStorage.getItem(STORAGE_USERCODE_BACKUP_KEY) || '');
 		}
 		cm.focus();
 	});
@@ -128,101 +132,108 @@ const createParamsUrl = function (current, overrides) {
 	}).join(',')}`;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-	const tsKey = 'elevatorTimeScale';
-	const editor = createEditor();
+class App extends Emitter {
+	worldController = new WorldController(1.0 / 60.0);
+	worldCreator = new WorldCreator();
+	world = undefined;
+	currentChallengeIndex = 0;
 
-	let params = {};
-
-	const innerWorld = document.querySelector('.innerworld');
-	const stats = document.querySelector('.statscontainer');
-	const feedback = document.querySelector('.feedbackcontainer');
-	const challenge = document.querySelector('.challenge');
-	const codestatus = document.querySelector('.codestatus');
-
-	const floorTempl = getTemplate('floor-template');
-	const elevatorTempl = getTemplate('elevator-template');
-	const elevatorButtonTempl = getTemplate('elevatorbutton-template');
-	const userTempl = getTemplate('user-template');
-	const challengeTempl = getTemplate('challenge-template');
-	const feedbackTempl = getTemplate('feedback-template');
-	const codeStatusTempl = getTemplate('codestatus-template');
-
-	const app = new riot.observable();
-	app.worldController = new WorldController(1.0 / 60.0);
-	app.worldController.on('usercode_error', (e) => {
-		console.log('World raised code error', e);
-		editor.trigger('usercode_error', e);
-	});
-
-	console.log(app.worldController);
-	app.worldCreator = new WorldCreator();
-	app.world = undefined;
-
-	app.currentChallengeIndex = 0;
-
-	app.startStopOrRestart = function () {
-		if (app.world.challengeEnded) {
-			app.startChallenge(app.currentChallengeIndex);
-		} else {
-			app.worldController.setPaused(!app.worldController.isPaused);
-		}
+	element = {
+		innerWorld: document.querySelector('.innerworld'),
+		stats: document.querySelector('.statscontainer'),
+		feedback: document.querySelector('.feedbackcontainer'),
+		challenge: document.querySelector('.challenge'),
 	};
 
-	app.startChallenge = async function (challengeIndex, autoStart) {
-		if (typeof app.world !== 'undefined') {
-			app.world.unWind();
+	template = {
+		floor: getTemplate('floor-template'),
+		elevator: getTemplate('elevator-template'),
+		elevatorButton: getTemplate('elevatorbutton-template'),
+		user: getTemplate('user-template'),
+		challenge: getTemplate('challenge-template'),
+		feedback: getTemplate('feedback-template'),
+	};
+
+	constructor(editor) {
+		super();
+
+		this.editor = editor;
+		this.worldController.on('usercode_error', (e) => {
+			console.log('World raised code error', e);
+			editor.trigger('usercode_error', e);
+		});
+		console.log(this.worldController);
+	}
+
+	startStopOrRestart() {
+		if (this.world.challengeEnded) {
+			this.startChallenge(this.currentChallengeIndex);
+		} else {
+			this.worldController.setPaused(!this.worldController.isPaused);
+		}
+	}
+
+	async startChallenge(challengeIndex, autoStart) {
+		if (typeof this.world !== 'undefined') {
+			this.world.unWind();
 			// TODO: Investigate if memory leaks happen here
 		}
-		app.currentChallengeIndex = challengeIndex;
-		app.world = app.worldCreator.createWorld(challenges[challengeIndex].options);
-		window.world = app.world;
+		this.currentChallengeIndex = challengeIndex;
+		this.world = this.worldCreator.createWorld(challenges[challengeIndex].options);
+		window.world = this.world;
 
-		clearAll([innerWorld, feedback]);
-		presentStats(stats, app.world);
+		clearAll([this.element.innerWorld, this.element.feedback]);
+		presentStats(this.element.stats, this.world);
 		presentChallenge(
-			challenge,
+			this.element.challenge,
 			challenges[challengeIndex],
-			app,
-			app.world,
-			app.worldController,
+			this,
+			this.world,
+			this.worldController,
 			challengeIndex + 1,
-			challengeTempl,
+			this.template.challenge,
 		);
-		presentWorld(innerWorld, app.world, floorTempl, elevatorTempl, elevatorButtonTempl, userTempl);
+		presentWorld(
+			this.element.innerWorld,
+			this.world,
+			this.template.floor,
+			this.template.elevator,
+			this.template.elevatorButton,
+			this.template.user,
+		);
 
-		app.worldController.on('timescale_changed', () => {
-			localStorage.setItem(tsKey, app.worldController.timeScale);
+		this.worldController.on('timescale_changed', () => {
+			localStorage.setItem(STORAGE_TIMESCALE_KEY, this.worldController.timeScale);
 			presentChallenge(
-				challenge,
+				this.element.challenge,
 				challenges[challengeIndex],
-				app,
-				app.world,
-				app.worldController,
+				this,
+				this.world,
+				this.worldController,
 				challengeIndex + 1,
-				challengeTempl,
+				this.template.challenge,
 			);
 		});
 
-		app.world.on('stats_changed', () => {
-			const challengeStatus = challenges[challengeIndex].condition.evaluate(app.world);
+		this.world.on('stats_changed', () => {
+			const challengeStatus = challenges[challengeIndex].condition.evaluate(this.world);
 			if (challengeStatus !== null) {
-				app.world.challengeEnded = true;
-				app.worldController.setPaused(true);
+				this.world.challengeEnded = true;
+				this.worldController.setPaused(true);
 				if (challengeStatus) {
 					presentFeedback(
-						feedback,
-						feedbackTempl,
-						app.world,
+						this.element.feedback,
+						this.template.feedback,
+						this.world,
 						'Success!',
 						'Challenge completed',
 						createParamsUrl(params, { challenge: challengeIndex + 2 }),
 					);
 				} else {
 					presentFeedback(
-						feedback,
-						feedbackTempl,
-						app.world,
+						this.element.feedback,
+						this.template.feedback,
+						this.world,
 						'Challenge failed',
 						'Maybe your program needs an improvement?',
 						'',
@@ -231,10 +242,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 
-		const codeObj = await editor.getCodeObj();
+		const codeObj = await this.editor.getCodeObj();
 		console.log('Starting...');
-		app.worldController.start(app.world, codeObj, window.requestAnimationFrame, autoStart);
-	};
+		this.worldController.start(this.world, codeObj, window.requestAnimationFrame, autoStart);
+	}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+	const editor = createEditor();
+	const codestatus = document.querySelector('.codestatus');
+	const codeStatusTempl = getTemplate('codestatus-template');
+
+	const app = new App(editor);
 
 	editor.on('apply_code', () => {
 		app.startChallenge(app.currentChallengeIndex, true);
@@ -247,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 	editor.on('change', () => {
 		document.querySelector('#fitness_message').classList.add('faded');
-		const codeStr = editor.getCode();
+		// const codeStr = editor.getCode();
 		// fitnessSuite(codeStr, true, function (results) {
 		// 	var message = '';
 		// 	if (!results.error) {
@@ -279,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		);
 		let requestedChallenge = 0;
 		let autoStart = false;
-		let timeScale = parseFloat(localStorage.getItem(tsKey)) || 2.0;
+		let timeScale = parseFloat(localStorage.getItem(STORAGE_TIMESCALE_KEY)) || 2.0;
 		_.each(params, (val, key) => {
 			if (key === 'challenge') {
 				requestedChallenge = _.parseInt(val) - 1;
