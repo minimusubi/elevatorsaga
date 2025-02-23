@@ -6,17 +6,6 @@ export const epsilonEquals = function (a, b) {
 	return Math.abs(a - b) < 0.00000001;
 };
 
-// Polyfill from MDN
-if (typeof Math.sign === 'undefined') {
-	Math.sign = function (x) {
-		x = +x; // convert to a number
-		if (x === 0 || isNaN(x)) {
-			return x;
-		}
-		return x > 0 ? 1 : -1;
-	};
-}
-
 export const deprecationWarning = function (name) {
 	console.warn(`You are using a deprecated feature scheduled for removal: ${name}`);
 };
