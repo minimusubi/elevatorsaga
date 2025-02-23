@@ -1,4 +1,3 @@
-import { challenges } from './challenges.js';
 import { WorldController, WorldCreator } from './world.js';
 import {
 	clearAll,
@@ -9,10 +8,11 @@ import {
 	presentStats,
 	presentWorld,
 } from './presenters.js';
-import { getTemplate } from './util.js';
 import Emitter from './emitter.js';
+import { challenges } from './challenges.js';
 import config from './config.js';
 import { createEditor } from './editor.js';
+import { getTemplate } from './util.js';
 
 let params = {};
 

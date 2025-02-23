@@ -14,6 +14,6 @@ export default [
 
 			parserOptions: { ecmaFeatures: { impliedStrict: true } },
 		},
-		rules: { 'no-unused-vars': 'warn' },
+		rules: { 'no-unused-vars': 'warn', 'sort-imports': ['warn'] },
 	},
 ];
