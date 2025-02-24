@@ -174,13 +174,14 @@ button.right {
 }
 
 .CodeMirror {
+	resize: vertical;
 	font:
 		14px Consolas,
 		Monaco,
 		monospace;
 	width: 1220px;
 	margin: 10px auto;
-	height: 320px;
+	height: 480px;
 }
 
 .world {
