@@ -1,14 +1,15 @@
 import { createFrameRequester, getModuleFromUserCode } from '../script/base.js';
+import {
+	requireUserCountWithMaxWaitTime,
+	requireUserCountWithinMoves,
+	requireUserCountWithinTime,
+	requireUserCountWithinTimeWithMaxWaitTime,
+} from '../script/challenges.js';
 import Elevator from '../script/elevator.js';
 import ElevatorInterface from '../script/interfaces.js';
 import Movable from '../script/movable.js';
 import User from '../script/user.js';
-import {
-	requireUserCountWithinMoves,
-	requireUserCountWithinTime,
-	requireUserCountWithinTimeWithMaxWaitTime,
-	requireUserCountWithMaxWaitTime,
-} from '../script/challenges.js';
+
 import { WorldController } from '../script/world.js';
 
 const timeForwarder = function (dt, stepSize, fn) {

@@ -1,7 +1,7 @@
 {
 	"name": "elevatorsaga",
 	"scripts": {
-		"lint": "npx eslint script/*.js libs/riot.js test/tests.js",
+		"lint": "npx eslint --flag unstable_config_lookup_from_file script/*.js libs/riot.js test/tests.js ",
 		"format": "npx prettier --write ."
 	},
 	"devDependencies": {

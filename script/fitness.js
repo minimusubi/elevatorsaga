@@ -102,7 +102,7 @@ function fitnessSuite(codeStr, preferWorker, callback) {
 	if (!!Worker && preferWorker) {
 		// Web workers are available, neat.
 		try {
-			const w = new Worker('script/fitnessworker.js');
+			const w = new Worker('script/worker/fitnessworker.js');
 			w.postMessage(codeStr);
 			w.onmessage = function (msg) {
 				console.log('Got message from fitness worker', msg);
