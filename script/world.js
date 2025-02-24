@@ -16,16 +16,11 @@ export class WorldCreator {
 		return floors;
 	}
 
-	createElevators(elevatorCount, floorCount, floorHeight, elevatorCapacities) {
-		elevatorCapacities = elevatorCapacities || [4];
+	createElevators(elevatorConfig, floorCount, floorHeight) {
 		let currentX = 200.0;
-		const elevators = _.map(_.range(elevatorCount), (e, i) => {
-			const elevator = new Elevator(
-				2.6,
-				floorCount,
-				floorHeight,
-				elevatorCapacities[i % elevatorCapacities.length],
-			);
+
+		return elevatorConfig.map(({ capacity }) => {
+			const elevator = new Elevator(2.6, floorCount, floorHeight, capacity ?? 4);
 
 			// Move to right x position
 			elevator.moveTo(currentX, null);
@@ -34,7 +29,6 @@ export class WorldCreator {
 			currentX += 20 + elevator.width;
 			return elevator;
 		});
-		return elevators;
 	}
 
 	createRandomUser() {
@@ -72,8 +66,13 @@ export class WorldCreator {
 
 	createWorld(options) {
 		console.log('Creating world with options', options);
-		const defaultOptions = { floorHeight: 50, floorCount: 4, elevatorCount: 2, spawnRate: 0.5 };
-		options = _.defaults(_.clone(options), defaultOptions);
+		const defaultOptions = {
+			floorHeight: 50,
+			floorCount: 4,
+			elevators: [{ capacity: 4 }, { capacity: 4 }],
+			spawnRate: 0.5,
+		};
+		options = { ...defaultOptions, ...options };
 		const world = new riot.observable();
 		world.floorHeight = options.floorHeight;
 		world.transportedCounter = 0;
@@ -83,12 +82,7 @@ export class WorldCreator {
 		};
 
 		world.floors = this.createFloors(options.floorCount, world.floorHeight, handleUserCodeError);
-		world.elevators = this.createElevators(
-			options.elevatorCount,
-			options.floorCount,
-			world.floorHeight,
-			options.elevatorCapacities,
-		);
+		world.elevators = this.createElevators(options.elevators, options.floorCount, world.floorHeight);
 		world.elevatorInterfaces = _.map(world.elevators, (e) => {
 			return new ElevatorInterface(e, options.floorCount, handleUserCodeError);
 		});

@@ -1,3 +1,5 @@
+import { getElevatorConfig } from './challenges';
+
 const requireNothing = function () {
 	return {
 		description: 'No requirement',
@@ -9,27 +11,15 @@ const requireNothing = function () {
 
 const fitnessChallenges = [
 	{
-		options: { description: 'Small scenario', floorCount: 4, elevatorCount: 2, spawnRate: 0.6 },
+		options: { description: 'Small scenario', floorCount: 4, elevators: getElevatorConfig(2, 4), spawnRate: 0.6 },
 		condition: requireNothing(),
 	},
 	{
-		options: {
-			description: 'Medium scenario',
-			floorCount: 6,
-			elevatorCount: 3,
-			spawnRate: 1.5,
-			elevatorCapacities: [5],
-		},
+		options: { description: 'Medium scenario', floorCount: 6, elevators: getElevatorConfig(3, 5), spawnRate: 1.5 },
 		condition: requireNothing(),
 	},
 	{
-		options: {
-			description: 'Large scenario',
-			floorCount: 18,
-			elevatorCount: 6,
-			spawnRate: 1.9,
-			elevatorCapacities: [8],
-		},
+		options: { description: 'Large scenario', floorCount: 18, elevators: getElevatorConfig(6, 8), spawnRate: 1.9 },
 		condition: requireNothing(),
 	},
 ];
