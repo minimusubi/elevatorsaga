@@ -2,8 +2,8 @@ import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
 import * as prettierPluginBabel from 'https://unpkg.com/prettier@3.5.2/plugins/babel.mjs';
 import * as prettierPluginEstree from 'https://unpkg.com/prettier@3.5.2/plugins/estree.mjs';
 import config from './config.js';
-import { getCodeObjFromCode } from '../script/base.js';
 import { getCodeTemplate } from './util.js';
+import { getModuleFromUserCode } from '../script/base.js';
 
 async function format(code) {
 	return await prettier.format(code, {
@@ -123,7 +123,7 @@ export const createEditor = () => {
 		const code = cm.getValue();
 		let obj;
 		try {
-			obj = await getCodeObjFromCode(code);
+			obj = await getModuleFromUserCode(code);
 			returnObj.trigger('code_success');
 		} catch (e) {
 			returnObj.trigger('usercode_error', e);

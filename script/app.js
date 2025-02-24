@@ -14,6 +14,7 @@ import { challenges } from './challenges.js';
 import config from './config.js';
 import { createEditor } from './editor.js';
 import { getTemplate } from './util.js';
+import { isUserError } from './base.js';
 
 let params = {};
 
@@ -146,6 +147,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const app = new App(editor);
 
+	// Handle uncaught promise rejections in user code
+	window.addEventListener('unhandledrejection', (event) => {
+		if (isUserError(event.reason)) {
+			app.worldController.setPaused(true);
+			presentCodeStatus(codestatus, codeStatusTempl, event.reason);
+		}
+	});
 	editor.on('apply_code', () => {
 		app.startChallenge(app.currentChallengeIndex, true);
 	});

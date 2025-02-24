@@ -1,3 +1,5 @@
+import { formatUserErrorStacktrace } from './base.js';
+
 function makeFragment(html) {
 	const container = document.createElement('template');
 	container.innerHTML = html;
@@ -173,6 +175,7 @@ export function presentCodeStatus(parent, templ, error) {
 	let errorMessage = error;
 	if (error && error.stack) {
 		errorMessage = error.stack;
+		errorMessage = formatUserErrorStacktrace(errorMessage);
 		errorMessage = errorMessage.replace(/\n/g, '<br>');
 	}
 	const status = riot.render(templ, {

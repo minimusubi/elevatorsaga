@@ -1,4 +1,4 @@
-import { createFrameRequester, getCodeObjFromCode } from '../script/base.js';
+import { createFrameRequester, getModuleFromUserCode } from '../script/base.js';
 import Elevator from '../script/elevator.js';
 import ElevatorInterface from '../script/interfaces.js';
 import Movable from '../script/movable.js';
@@ -533,16 +533,16 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('base', () => {
-		describe('getCodeObjFromCode', () => {
+		describe('getModuleFromUserCode', () => {
 			const testCode = 'export function init() {} export function update() {}';
 			it('handles trailing whitespace', () => {
-				expect(getCodeObjFromCode(`${testCode}\n`)).toEqual(jasmine.any(Object));
+				expect(getModuleFromUserCode(`${testCode}\n`)).toEqual(jasmine.any(Object));
 			});
 			it('handles prefix whitespace', () => {
-				expect(getCodeObjFromCode(`\n${testCode}`)).toEqual(jasmine.any(Object));
+				expect(getModuleFromUserCode(`\n${testCode}`)).toEqual(jasmine.any(Object));
 			});
 			it('handles prefix and trailing whitespace', () => {
-				expect(getCodeObjFromCode(`\n${testCode}\n`)).toEqual(jasmine.any(Object));
+				expect(getModuleFromUserCode(`\n${testCode}\n`)).toEqual(jasmine.any(Object));
 			});
 		});
 	});

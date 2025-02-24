@@ -1,5 +1,5 @@
 import { WorldController, WorldCreator } from './world.js';
-import { createFrameRequester, getCodeObjFromCode } from './base.js';
+import { createFrameRequester, getModuleFromUserCode } from './base.js';
 import { getElevatorConfig } from './challenges.js';
 
 const requireNothing = function () {
@@ -64,7 +64,7 @@ function makeAverageResult(results) {
 function doFitnessSuite(codeStr, runCount) {
 	let codeObj;
 	try {
-		codeObj = getCodeObjFromCode(codeStr);
+		codeObj = getModuleFromUserCode(codeStr);
 	} catch (e) {
 		return { error: `${e}` };
 	}

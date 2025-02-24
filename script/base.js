@@ -38,16 +38,27 @@ export const createFrameRequester = function (timeStep) {
 	return requester;
 };
 
-export const getCodeObjFromCode = async function (code) {
-	if (code.trim().substr(0, 1) == '{' && code.trim().substr(-1, 1) == '}') {
-		code = `(${code})`;
+export const getModuleFromUserCode = async function (code) {
+	const moduleURL = URL.createObjectURL(new Blob([code], { type: 'text/javascript; charset=utf-8' }));
+	const userModule = await import(moduleURL);
+	URL.revokeObjectURL(moduleURL);
+
+	if (typeof userModule.init !== 'function') {
+		throw new Error('Module must export an init function');
 	}
-	const obj = await import(`data:text/javascript;charset=utf-8,${encodeURIComponent(code)}`);
-	if (typeof obj.init !== 'function') {
-		throw new Error('Code must export an init function');
+	if (typeof userModule.update !== 'function') {
+		throw new Error('Module must export an update function');
 	}
-	if (typeof obj.update !== 'function') {
-		throw new Error('Code must export an update function');
-	}
-	return obj;
+
+	return userModule;
+};
+
+const USER_ERROR_REGEX = /blob:.+:(?<line>\d+):(?<column>\d+)(?=\)(?:\n|$))/g;
+
+export const isUserError = (error) => {
+	return USER_ERROR_REGEX.test(error.stack);
+};
+
+export const formatUserErrorStacktrace = (stacktrace) => {
+	return stacktrace.replaceAll(USER_ERROR_REGEX, 'USER_CODE: Line $<line>, column $<column>');
 };
