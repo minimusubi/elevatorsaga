@@ -1,3 +1,4 @@
+import './fitness.js';
 import { WorldController, WorldCreator } from './world.js';
 import {
 	clearAll,

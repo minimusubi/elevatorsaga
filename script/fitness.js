@@ -1,4 +1,6 @@
-import { getElevatorConfig } from './challenges';
+import { WorldController, WorldCreator } from './world.js';
+import { createFrameRequester, getCodeObjFromCode } from './base.js';
+import { getElevatorConfig } from './challenges.js';
 
 const requireNothing = function () {
 	return {
@@ -26,10 +28,10 @@ const fitnessChallenges = [
 
 // Simulation without visualisation
 function calculateFitness(challenge, codeObj, stepSize, stepsToSimulate) {
-	const controller = createWorldController(stepSize);
+	const controller = new WorldController(stepSize);
 	const result = {};
 
-	const worldCreator = createWorldCreator();
+	const worldCreator = new WorldCreator();
 	const world = worldCreator.createWorld(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);
 
