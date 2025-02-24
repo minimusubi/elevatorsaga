@@ -2,6 +2,7 @@ import Elevator from './elevator.js';
 import ElevatorInterface from './interfaces.js';
 import Floor from './floor.js';
 import User from './user.js';
+import config from './config.js';
 
 export class WorldCreator {
 	constructor() {}
@@ -267,6 +268,7 @@ export class WorldController extends riot.observable {
 		this.isPaused = true;
 		let lastT = null;
 		let firstUpdate = true;
+		let timeSinceStatsUpdate = Infinity;
 		world.on('usercode_error', this.handleUserCodeError);
 		const updater = (t) => {
 			if (!this.isPaused && !world.challengeEnded && lastT !== null) {
@@ -295,11 +297,26 @@ export class WorldController extends riot.observable {
 					scaledDt -= this.dtMax;
 				}
 				world.updateDisplayPositions();
-				world.trigger('stats_display_changed'); // TODO: Trigger less often for performance reasons etc
+
+				timeSinceStatsUpdate += dt;
+
+				// Trigger stat update every STATISTICS_UPDATE_INTERVAL ms
+				if (timeSinceStatsUpdate >= config.STATISTICS_UPDATE_INTERVAL) {
+					world.trigger('stats_display_changed');
+					timeSinceStatsUpdate = 0;
+				}
 			}
 			lastT = t;
 			if (!world.challengeEnded) {
 				animationFrameRequester(updater);
+			}
+
+			if (world.challengeEnded || this.isPaused) {
+				if (timeSinceStatsUpdate > 0) {
+					// Immediately update stats if the simulation is paused or completed
+					world.trigger('stats_display_changed');
+					timeSinceStatsUpdate = 0;
+				}
 			}
 		};
 		if (autoStart) {
