@@ -263,7 +263,7 @@ export class WorldController extends riot.observable {
 		let lastT = null;
 		let firstUpdate = true;
 		let timeSinceStatsUpdate = Infinity;
-		world.on('usercode_error', this.handleUserCodeError);
+		world.on('usercode_error', this.handleUserCodeError.bind(this));
 		const updater = (t) => {
 			if (!this.isPaused && !world.challengeEnded && lastT !== null) {
 				if (firstUpdate) {
