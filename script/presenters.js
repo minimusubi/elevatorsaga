@@ -51,11 +51,8 @@ export function presentChallenge(parent, challenge, app, world, worldController,
 		challenge: challenge,
 		num: challengeNum,
 		timeScale: `${worldController.timeScale.toFixed(0)}x`,
-		startButtonText: world.challengeEnded
-			? "<i class='fa fa-repeat'></i> Restart"
-			: worldController.isPaused
-				? 'Start'
-				: 'Pause',
+		startButtonText: world.challengeEnded ? 'Restart' : worldController.isPaused ? 'Start' : 'Pause',
+		startButtonIcon: world.challengeEnded ? 'replay' : worldController.isPaused ? 'play_arrow' : 'pause',
 	});
 
 	parent.querySelector('.startstop').addEventListener('click', () => {

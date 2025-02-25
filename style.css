@@ -101,6 +101,14 @@ button.right {
 	margin-right: 0;
 }
 
+button .material-symbols-outlined {
+	vertical-align: middle;
+}
+
+button .material-symbols-outlined + span {
+	vertical-align: middle;
+}
+
 .blink {
 	animation: blink 0.5s steps(3, start) infinite;
 	-webkit-animation: blink 0.5s steps(3, start) infinite;

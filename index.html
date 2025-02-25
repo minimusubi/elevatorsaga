@@ -5,6 +5,19 @@
 		<meta charset="UTF-8" />
 		<link rel="stylesheet" href="font-awesome-4.1-1.0/css/font-awesome.min.css" type="text/css" media="all" />
 		<link href="https://fonts.googleapis.com/css?family=Oswald:400,700,300" rel="stylesheet" type="text/css" />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+		/>
+		<style>
+			.material-symbols-outlined {
+				font-variation-settings:
+					'FILL' 0,
+					'wght' 300,
+					'GRAD' 0,
+					'opsz' 24;
+			}
+		</style>
 		<link rel="stylesheet" href="libs/codemirror/codemirror.css" />
 		<link rel="stylesheet" href="libs/codemirror/themes/solarized.css" />
 		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
@@ -57,7 +70,10 @@
 			<div class="left">
 				<h3>Challenge #{num}: {challenge.condition.description}</h3>
 			</div>
-			<button class="right startstop unselectable" style="width: 110px">{startButtonText}</button>
+			<button class="right startstop unselectable" style="width: 110px">
+				<span class="material-symbols-outlined">{startButtonIcon}</span>
+				<span>{startButtonText}</span>
+			</button>
 			<h3 class="right">
 				<i class="fa fa-minus-square timescale_decrease unselectable"></i>
 				<span class="emphasis-color" style="display: inline-block; width: 22px; text-align: center">{timeScale}</span>
@@ -165,11 +181,26 @@
 			<div class="code">
 				<textarea name="Code" id="code"></textarea>
 			</div>
-			<button id="button_reset" style="float: left">Reset</button>
-			<button id="button_resetundo" style="float: left">Undo reset</button>
-			<button id="button_format" style="float: left">Format code</button>
-			<button id="button_apply" style="float: right">Apply</button>
-			<button id="button_save" style="float: right">Save</button>
+			<button id="button_reset" style="float: left">
+				<span class="material-symbols-outlined">refresh</span>
+				<span>Reset</span>
+			</button>
+			<button id="button_resetundo" style="float: left">
+				<span class="material-symbols-outlined">undo</span>
+				<span>Undo reset</span>
+			</button>
+			<button id="button_format" style="float: left">
+				<span class="material-symbols-outlined">format_paint</span>
+				<span>Format code</span>
+			</button>
+			<button id="button_apply" style="float: right">
+				<span class="material-symbols-outlined">check</span>
+				<span>Apply</span>
+			</button>
+			<button id="button_save" style="float: right">
+				<span class="material-symbols-outlined">save</span>
+				<span>Save</span>
+			</button>
 			<span id="save_message" style="float: right"></span>
 			<span id="fitness_message" style="float: right"></span>
 			<div style="clear: both"></div>
