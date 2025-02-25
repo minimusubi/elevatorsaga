@@ -1,5 +1,5 @@
 import './fitness.js';
-import { WorldController, WorldCreator } from './world.js';
+import { World, WorldController } from './world.js';
 import {
 	clearAll,
 	makeDemoFullscreen,
@@ -26,7 +26,6 @@ const createParamsUrl = function (current, overrides) {
 
 class App extends Emitter {
 	worldController = new WorldController(1.0 / 60.0);
-	worldCreator = new WorldCreator();
 	world = undefined;
 	currentChallengeIndex = 0;
 
@@ -71,7 +70,7 @@ class App extends Emitter {
 			// TODO: Investigate if memory leaks happen here
 		}
 		this.currentChallengeIndex = challengeIndex;
-		this.world = this.worldCreator.createWorld(challenges[challengeIndex].options);
+		this.world = new World(challenges[challengeIndex].options);
 		window.world = this.world;
 
 		clearAll([this.element.innerWorld, this.element.feedback]);

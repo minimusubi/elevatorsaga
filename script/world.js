@@ -4,10 +4,24 @@ import Floor from './floor.js';
 import User from './user.js';
 import config from './config.js';
 
-export class WorldCreator {
-	constructor() {}
+export class World extends riot.observable {
+	floorHeight;
+	floors;
+	elevators;
+	elevatorInterfaces;
+	spawnRate;
+	users = [];
+	transportedCounter = 0;
+	transportedPerSec = 0.0;
+	moveCount = 0;
+	elapsedTime = 0.0;
+	elapsedSinceSpawn;
+	elapsedSinceStatsUpdate = 0.0;
+	maxWaitTime = 0.0;
+	avgWaitTime = 0.0;
+	challengeEnded = false;
 
-	createFloors(floorCount, floorHeight, errorHandler) {
+	static createFloors(floorCount, floorHeight, errorHandler) {
 		const floors = _.map(_.range(floorCount), (e, i) => {
 			const yPos = (floorCount - 1 - i) * floorHeight;
 			const floor = new Floor(i, yPos, errorHandler);
@@ -16,7 +30,7 @@ export class WorldCreator {
 		return floors;
 	}
 
-	createElevators(elevatorConfig, floorCount, floorHeight) {
+	static createElevators(elevatorConfig, floorCount, floorHeight) {
 		let currentX = 200.0;
 
 		return elevatorConfig.map(({ capacity }) => {
@@ -31,7 +45,7 @@ export class WorldCreator {
 		});
 	}
 
-	createRandomUser() {
+	static createRandomUser() {
 		const weight = _.random(55, 100);
 		const user = new User(weight);
 		if (_.random(40) === 0) {
@@ -44,18 +58,18 @@ export class WorldCreator {
 		return user;
 	}
 
-	spawnUserRandomly(floorCount, floorHeight, floors) {
-		const user = this.createRandomUser();
+	static spawnUserRandomly(floors) {
+		const user = World.createRandomUser();
 		user.moveTo(105 + _.random(40), 0);
-		const currentFloor = _.random(1) === 0 ? 0 : _.random(floorCount - 1);
+		const currentFloor = _.random(1) === 0 ? 0 : _.random(floors.length - 1);
 		let destinationFloor;
 		if (currentFloor === 0) {
 			// Definitely going up
-			destinationFloor = _.random(1, floorCount - 1);
+			destinationFloor = _.random(1, floors.length - 1);
 		} else {
 			// Usually going down, but sometimes not
 			if (_.random(10) === 0) {
-				destinationFloor = (currentFloor + _.random(1, floorCount - 1)) % floorCount;
+				destinationFloor = (currentFloor + _.random(1, floors.length - 1)) % floors.length;
 			} else {
 				destinationFloor = 0;
 			}
@@ -64,7 +78,9 @@ export class WorldCreator {
 		return user;
 	}
 
-	createWorld(options) {
+	constructor(options) {
+		super();
+
 		console.log('Creating world with options', options);
 		const defaultOptions = {
 			floorHeight: 50,
@@ -73,179 +89,160 @@ export class WorldCreator {
 			spawnRate: 0.5,
 		};
 		options = { ...defaultOptions, ...options };
-		const world = new riot.observable();
-		world.floorHeight = options.floorHeight;
-		world.transportedCounter = 0;
 
-		const handleUserCodeError = function (e) {
-			world.trigger('usercode_error', e);
+		this.floorHeight = options.floorHeight;
+
+		const handleUserCodeError = (e) => {
+			this.trigger('usercode_error', e);
 		};
 
-		world.floors = this.createFloors(options.floorCount, world.floorHeight, handleUserCodeError);
-		world.elevators = this.createElevators(options.elevators, options.floorCount, world.floorHeight);
-		world.elevatorInterfaces = _.map(world.elevators, (e) => {
-			return new ElevatorInterface(e, options.floorCount, handleUserCodeError);
+		this.floors = World.createFloors(options.floorCount, options.floorHeight, handleUserCodeError);
+		this.elevators = World.createElevators(options.elevators, options.floorCount, options.floorHeight);
+		this.elevatorInterfaces = this.elevators.map((elevator) => {
+			return new ElevatorInterface(elevator, options.floorCount, handleUserCodeError);
 		});
-		world.users = [];
-		world.transportedCounter = 0;
-		world.transportedPerSec = 0.0;
-		world.moveCount = 0;
-		world.elapsedTime = 0.0;
-		world.maxWaitTime = 0.0;
-		world.avgWaitTime = 0.0;
-		world.challengeEnded = false;
-
-		const recalculateStats = function () {
-			world.transportedPerSec = world.transportedCounter / world.elapsedTime;
-			// TODO: Optimize this loop?
-			world.moveCount = _.reduce(
-				world.elevators,
-				(sum, elevator) => {
-					return sum + elevator.moveCount;
-				},
-				0,
-			);
-			world.trigger('stats_changed');
-		};
-
-		const registerUser = function (user) {
-			world.users.push(user);
-			user.updateDisplayPosition(true);
-			user.spawnTimestamp = world.elapsedTime;
-			world.trigger('new_user', user);
-			user.on('exited_elevator', () => {
-				world.transportedCounter++;
-				world.maxWaitTime = Math.max(world.maxWaitTime, world.elapsedTime - user.spawnTimestamp);
-				world.avgWaitTime =
-					(world.avgWaitTime * (world.transportedCounter - 1) + (world.elapsedTime - user.spawnTimestamp)) /
-					world.transportedCounter;
-				recalculateStats();
-			});
-			user.updateDisplayPosition(true);
-		};
-
-		const handleElevAvailability = function (elevator) {
-			// Use regular loops for memory/performance reasons
-			// Notify floors first because overflowing users
-			// will press buttons again.
-			for (let i = 0, len = world.floors.length; i < len; ++i) {
-				const floor = world.floors[i];
-				if (elevator.currentFloor === i) {
-					floor.elevatorAvailable(elevator);
-				}
-			}
-			for (let users = world.users, i = 0, len = users.length; i < len; ++i) {
-				const user = users[i];
-				if (user.currentFloor === elevator.currentFloor) {
-					user.elevatorAvailable(elevator, world.floors[elevator.currentFloor]);
-				}
-			}
-		};
+		this.spawnRate = options.spawnRate;
 
 		// Bind them all together
-		for (let i = 0; i < world.elevators.length; ++i) {
-			world.elevators[i].on('entrance_available', handleElevAvailability);
+		for (const elevator of this.elevators) {
+			elevator.on('entrance_available', this.#handleElevAvailability);
 		}
-
-		const handleButtonRepressing = function (eventName, floor) {
-			// Need randomize iteration order or we'll tend to fill upp first elevator
-			for (let i = 0, len = world.elevators.length, offset = _.random(len - 1); i < len; ++i) {
-				const elevIndex = (i + offset) % len;
-				const elevator = world.elevators[elevIndex];
-				if (
-					(eventName === 'up_button_pressed' && elevator.goingUpIndicator) ||
-					(eventName === 'down_button_pressed' && elevator.goingDownIndicator)
-				) {
-					// Elevator is heading in correct direction, check for suitability
-					if (
-						elevator.currentFloor === floor.level &&
-						elevator.isOnAFloor() &&
-						!elevator.isMoving &&
-						!elevator.isFull()
-					) {
-						// Potentially suitable to get into
-						// Use the interface queue functionality to queue up this action
-						world.elevatorInterfaces[elevIndex].goToFloor(floor.level, true);
-						return;
-					}
-				}
-			}
-		};
 
 		// This will cause elevators to "re-arrive" at floors if someone presses an
 		// appropriate button on the floor before the elevator has left.
-		for (let i = 0; i < world.floors.length; ++i) {
-			world.floors[i].on('up_button_pressed down_button_pressed', handleButtonRepressing);
+		for (const floor of this.floors) {
+			floor.on('up_button_pressed down_button_pressed', this.#handleButtonRepressing);
 		}
 
-		let elapsedSinceSpawn = 1.001 / options.spawnRate;
-		let elapsedSinceStatsUpdate = 0.0;
+		this.elapsedSinceSpawn = 1.001 / options.spawnRate;
+	}
 
-		// Main update function
-		world.update = (dt) => {
-			world.elapsedTime += dt;
-			elapsedSinceSpawn += dt;
-			elapsedSinceStatsUpdate += dt;
-			while (elapsedSinceSpawn > 1.0 / options.spawnRate) {
-				elapsedSinceSpawn -= 1.0 / options.spawnRate;
-				registerUser(this.spawnUserRandomly(options.floorCount, world.floorHeight, world.floors));
-			}
+	#recalculateStats() {
+		this.transportedPerSec = this.transportedCounter / this.elapsedTime;
+		// TODO: Optimize this loop?
+		this.moveCount = this.elevators.reduce((sum, elevator) => {
+			return sum + elevator.moveCount;
+		}, 0);
+		this.trigger('stats_changed');
+	}
 
-			// Use regular for loops for performance and memory friendlyness
-			for (let i = 0, len = world.elevators.length; i < len; ++i) {
-				const e = world.elevators[i];
-				e.update(dt);
-				e.updateElevatorMovement(dt);
-			}
-			for (let users = world.users, i = 0, len = users.length; i < len; ++i) {
-				const u = users[i];
-				u.update(dt);
-				world.maxWaitTime = Math.max(world.maxWaitTime, world.elapsedTime - u.spawnTimestamp);
-			}
+	#registerUser(user) {
+		this.users.push(user);
+		user.updateDisplayPosition(true);
+		user.spawnTimestamp = this.elapsedTime;
+		this.trigger('new_user', user);
+		user.on('exited_elevator', () => {
+			this.transportedCounter++;
+			this.maxWaitTime = Math.max(this.maxWaitTime, this.elapsedTime - user.spawnTimestamp);
+			this.avgWaitTime =
+				(this.avgWaitTime * (this.transportedCounter - 1) + (this.elapsedTime - user.spawnTimestamp)) /
+				this.transportedCounter;
+			this.#recalculateStats();
+		});
+		user.updateDisplayPosition(true);
+	}
 
-			for (let users = world.users, i = world.users.length - 1; i >= 0; i--) {
-				const u = users[i];
-				if (u.removeMe) {
-					users.splice(i, 1);
+	#handleElevAvailability = function (elevator) {
+		// Use regular loops for memory/performance reasons
+		// Notify floors first because overflowing users
+		// will press buttons again.
+		for (let i = 0, len = this.floors.length; i < len; ++i) {
+			const floor = this.floors[i];
+			if (elevator.currentFloor === i) {
+				floor.elevatorAvailable(elevator);
+			}
+		}
+		for (let users = this.users, i = 0, len = users.length; i < len; ++i) {
+			const user = users[i];
+			if (user.currentFloor === elevator.currentFloor) {
+				user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]);
+			}
+		}
+	}.bind(this);
+
+	#handleButtonRepressing = function (eventName, floor) {
+		// Need randomize iteration order or we'll tend to fill upp first elevator
+		for (let i = 0, len = this.elevators.length, offset = _.random(len - 1); i < len; ++i) {
+			const elevIndex = (i + offset) % len;
+			const elevator = this.elevators[elevIndex];
+			if (
+				(eventName === 'up_button_pressed' && elevator.goingUpIndicator) ||
+				(eventName === 'down_button_pressed' && elevator.goingDownIndicator)
+			) {
+				// Elevator is heading in correct direction, check for suitability
+				if (
+					elevator.currentFloor === floor.level &&
+					elevator.isOnAFloor() &&
+					!elevator.isMoving &&
+					!elevator.isFull()
+				) {
+					// Potentially suitable to get into
+					// Use the interface queue functionality to queue up this action
+					this.elevatorInterfaces[elevIndex].goToFloor(floor.level, true);
+					return;
 				}
 			}
+		}
+	}.bind(this);
 
-			recalculateStats();
-		};
+	update(dt) {
+		this.elapsedTime += dt;
+		this.elapsedSinceSpawn += dt;
+		this.elapsedSinceStatsUpdate += dt;
+		while (this.elapsedSinceSpawn > 1.0 / this.spawnRate) {
+			this.elapsedSinceSpawn -= 1.0 / this.spawnRate;
+			this.#registerUser(World.spawnUserRandomly(this.floors));
+		}
 
-		world.updateDisplayPositions = function () {
-			for (let i = 0, len = world.elevators.length; i < len; ++i) {
-				world.elevators[i].updateDisplayPosition();
+		// Use regular for loops for performance and memory friendlyness
+		for (const elevator of this.elevators) {
+			elevator.update(dt);
+			elevator.updateElevatorMovement(dt);
+		}
+		for (const user of this.users) {
+			user.update(dt);
+			this.maxWaitTime = Math.max(this.maxWaitTime, this.elapsedTime - user.spawnTimestamp);
+		}
+
+		for (let i = this.users.length - 1; i >= 0; i--) {
+			const user = this.users[i];
+			if (user.removeMe) {
+				this.users.splice(i, 1);
 			}
-			for (let users = world.users, i = 0, len = users.length; i < len; ++i) {
-				users[i].updateDisplayPosition();
-			}
-		};
+		}
 
-		world.unWind = function () {
-			console.log('Unwinding', world);
-			_.each(
-				world.elevators
-					.concat(world.elevatorInterfaces)
-					.concat(world.users)
-					.concat(world.floors)
-					.concat([world]),
-				(obj) => {
-					obj.off('*');
-				},
-			);
-			world.challengeEnded = true;
-			world.elevators = world.elevatorInterfaces = world.users = world.floors = [];
-		};
+		this.#recalculateStats();
+	}
 
-		world.init = function () {
-			// Checking the floor queue of the elevators triggers the idle event here
-			for (let i = 0; i < world.elevatorInterfaces.length; ++i) {
-				world.elevatorInterfaces[i].checkDestinationQueue();
-			}
-		};
+	updateDisplayPositions() {
+		for (const elevator of this.elevators) {
+			elevator.updateDisplayPosition();
+		}
+		for (const user of this.users) {
+			user.updateDisplayPosition();
+		}
+	}
 
-		return world;
+	unWind() {
+		console.log('Unwinding', this);
+
+		const eventObjects = this.elevators
+			.concat(this.elevatorInterfaces)
+			.concat(this.users)
+			.concat(this.floors)
+			.concat([this]);
+		for (const object of eventObjects) {
+			object.off('*');
+		}
+		this.challengeEnded = true;
+		this.elevators = this.elevatorInterfaces = this.users = this.floors = [];
+	}
+
+	init() {
+		// Checking the floor queue of the elevators triggers the idle event here
+		for (let i = 0; i < this.elevatorInterfaces.length; ++i) {
+			this.elevatorInterfaces[i].checkDestinationQueue();
+		}
 	}
 }
 

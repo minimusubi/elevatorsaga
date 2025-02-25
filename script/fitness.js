@@ -1,4 +1,4 @@
-import { WorldController, WorldCreator } from './world.js';
+import { World, WorldController } from './world.js';
 import { createFrameRequester, getModuleFromUserCode } from './base.js';
 import { getElevatorConfig } from './challenges.js';
 
@@ -31,8 +31,7 @@ function calculateFitness(challenge, codeObj, stepSize, stepsToSimulate) {
 	const controller = new WorldController(stepSize);
 	const result = {};
 
-	const worldCreator = new WorldCreator();
-	const world = worldCreator.createWorld(challenge.options);
+	const world = new World(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);
 
 	controller.on('usercode_error', (e) => {
