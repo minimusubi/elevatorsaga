@@ -51,26 +51,6 @@ export const createEditor = () => {
 		},
 	});
 
-	// reindent on paste (adapted from https://github.com/ahuth/brackets-paste-and-indent/blob/master/main.js)
-	cm.on('change', (codeMirror, change) => {
-		if (change.origin !== 'paste') {
-			return;
-		}
-
-		const lineFrom = change.from.line;
-		const lineTo = change.from.line + change.text.length;
-
-		function reindentLines() {
-			codeMirror.operation(() => {
-				codeMirror.eachLine(lineFrom, lineTo, (lineHandle) => {
-					codeMirror.indentLine(lineHandle.lineNo(), 'smart');
-				});
-			});
-		}
-
-		reindentLines();
-	});
-
 	const reset = function () {
 		cm.setValue(getCodeTemplate('default-elev-implementation'));
 	};
