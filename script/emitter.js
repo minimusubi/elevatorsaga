@@ -26,6 +26,10 @@ export default class Emitter extends EventTarget {
 	}
 
 	off(events, callback) {
+		if (events === '*') {
+			events = Array.from(this.listeners.keys()).join(' ');
+		}
+
 		for (const event of events.split(/\s+/)) {
 			const callbackMap = this.listeners.get(event);
 
