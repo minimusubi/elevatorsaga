@@ -1,3 +1,4 @@
+import { createParamsUrl } from './app.js';
 import { formatUserErrorStacktrace } from './base.js';
 
 function makeFragment(html) {
@@ -46,9 +47,48 @@ export function presentStats(parent, world) {
 	world.trigger('stats_display_changed');
 }
 
-export function presentChallenge(parent, challenge, app, world, worldController, challengeNum, challengeTempl) {
+export function presentChallengeSelector(challenges, currentIndex, highestIndex) {
+	const prevButton = document.querySelector('.challenge-navigator .previous');
+	const nextButton = document.querySelector('.challenge-navigator .next');
+	if (currentIndex === 0) {
+		prevButton.removeAttribute('href');
+		prevButton.classList.add('disabled');
+	} else {
+		prevButton.href = createParamsUrl({ challenge: currentIndex });
+		prevButton.classList.remove('disabled');
+	}
+	if (currentIndex === challenges.length - 1 || currentIndex >= highestIndex) {
+		nextButton.removeAttribute('href');
+		nextButton.classList.add('disabled');
+	} else {
+		nextButton.href = createParamsUrl({ challenge: currentIndex + 2 });
+		nextButton.classList.remove('disabled');
+	}
+
+	document.querySelector('.challenge-selector').replaceChildren(
+		...challenges.map((_, index) => {
+			const element = document.createElement('a');
+			element.innerText = index + 1;
+			element.href = createParamsUrl({ challenge: index + 1 });
+			if (currentIndex === index) {
+				element.classList.add('emphasis-color');
+			}
+			if (index > highestIndex) {
+				element.classList.add('disabled');
+				element.removeAttribute('href');
+				element.addEventListener('click', (event) => {
+					event.preventDefault();
+				});
+			}
+
+			return element;
+		}),
+	);
+}
+
+export function presentChallenge(parent, challenge, challengeNum, app, world, worldController, challengeTempl) {
 	parent.innerHTML = riot.render(challengeTempl, {
-		challenge: challenge,
+		challenge,
 		num: challengeNum,
 		timeScale: `${worldController.timeScale.toFixed(0)}x`,
 		startButtonText: world.challengeEnded ? 'Restart' : worldController.isPaused ? 'Start' : 'Pause',

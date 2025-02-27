@@ -41,8 +41,13 @@ a {
 	font-weight: bold;
 	text-decoration: none;
 }
-a:hover {
+a:not(.disabled):hover {
 	text-decoration: underline;
+}
+
+a.disabled {
+	color: #888;
+	cursor: default;
 }
 
 h2,
@@ -94,6 +99,7 @@ button {
 	border: 1px solid #666;
 	border-radius: 5px;
 	margin-right: 5px;
+	user-select: none;
 }
 
 button.right {
@@ -164,6 +170,21 @@ button .material-symbols-outlined + span {
 	font-size: 20px;
 	line-height: 50px;
 	padding: 0 4px;
+}
+
+.challenge-navigator h2 {
+	display: inline;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+
+.challenge-navigator .challenge-selector {
+	margin-left: -0.5rem;
+}
+
+.challenge-navigator .challenge-selector a {
+	padding: 0.5rem;
+	vertical-align: middle;
 }
 
 .timescale_decrease,

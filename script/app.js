@@ -4,6 +4,7 @@ import {
 	clearAll,
 	makeDemoFullscreen,
 	presentChallenge,
+	presentChallengeSelector,
 	presentCodeStatus,
 	presentFeedback,
 	presentStats,
@@ -18,16 +19,27 @@ import { isUserError } from './base.js';
 
 let params = {};
 
-const createParamsUrl = function (current, overrides) {
-	return `#${_.map(_.merge(current, overrides), (val, key) => {
-		return `${key}=${val}`;
-	}).join(',')}`;
-};
+export function createParamsUrl(overrides) {
+	const merged = { ...params, ...overrides };
+
+	return (
+		'#' +
+		Object.entries(merged)
+			.filter(([, value]) => {
+				return value !== null && value !== undefined;
+			})
+			.map(([key, value]) => {
+				return `${key}=${value}`;
+			})
+			.join(',')
+	);
+}
 
 class App extends Emitter {
 	worldController = new WorldController(1.0 / 60.0);
 	world = undefined;
 	currentChallengeIndex = 0;
+	highestChallengeIndex = 0;
 
 	element = {
 		innerWorld: document.querySelector('.innerworld'),
@@ -70,18 +82,24 @@ class App extends Emitter {
 			// TODO: Investigate if memory leaks happen here
 		}
 		this.currentChallengeIndex = challengeIndex;
+
+		if (challengeIndex > this.highestChallengeIndex) {
+			this.highestChallengeIndex = challengeIndex;
+		}
+
 		this.world = new World(challenges[challengeIndex].options);
 		window.world = this.world;
 
 		clearAll([this.element.innerWorld, this.element.feedback]);
 		presentStats(this.element.stats, this.world);
+		presentChallengeSelector(challenges, challengeIndex, this.highestChallengeIndex);
 		presentChallenge(
 			this.element.challenge,
 			challenges[challengeIndex],
+			challengeIndex + 1,
 			this,
 			this.world,
 			this.worldController,
-			challengeIndex + 1,
 			this.template.challenge,
 		);
 		presentWorld(
@@ -98,10 +116,10 @@ class App extends Emitter {
 			presentChallenge(
 				this.element.challenge,
 				challenges[challengeIndex],
+				challengeIndex + 1,
 				this,
 				this.world,
 				this.worldController,
-				challengeIndex + 1,
 				this.template.challenge,
 			);
 		});
@@ -112,13 +130,15 @@ class App extends Emitter {
 				this.world.challengeEnded = true;
 				this.worldController.setPaused(true);
 				if (challengeStatus) {
+					this.highestChallengeIndex = Math.max(this.highestChallengeIndex, challengeIndex + 1);
+					presentChallengeSelector(challenges, challengeIndex, this.highestChallengeIndex);
 					presentFeedback(
 						this.element.feedback,
 						this.template.feedback,
 						this.world,
 						'Success!',
 						'Challenge completed',
-						createParamsUrl(params, { challenge: challengeIndex + 2 }),
+						createParamsUrl({ challenge: challengeIndex + 2 }),
 					);
 				} else {
 					presentFeedback(
