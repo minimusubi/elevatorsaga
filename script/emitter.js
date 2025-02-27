@@ -5,24 +5,33 @@ export default class Emitter extends EventTarget {
 		super();
 	}
 
-	on(events, callback) {
-		const wrappedCallback = (event) => {
-			callback(...event.detail);
-		};
-
+	#attachListener(events, originalCallback, wrappedCallback) {
 		for (const event of events.split(/\s+/)) {
 			if (!this.listeners.has(event)) {
 				this.listeners.set(event, new Map());
 			}
 
 			const callbackMap = this.listeners.get(event);
-			if (callbackMap.has(callback)) {
+			if (callbackMap.has(originalCallback)) {
 				return;
 			}
 
-			callbackMap.set(callback, wrappedCallback);
+			callbackMap.set(originalCallback, wrappedCallback);
 			this.addEventListener(event, wrappedCallback);
 		}
+	}
+
+	#on(events, originalCallback, preWrappedCallback = null) {
+		const callable = preWrappedCallback ?? originalCallback;
+		let wrappedCallback = (event) => {
+			callable(...event.detail);
+		};
+
+		this.#attachListener(events, originalCallback, wrappedCallback);
+	}
+
+	on(events, callback) {
+		this.#on(events, callback);
 	}
 
 	off(events, callback) {
@@ -53,10 +62,10 @@ export default class Emitter extends EventTarget {
 	once(events, callback) {
 		const wrappedCallback = (...args) => {
 			callback(...args);
-			this.off(events, wrappedCallback);
+			this.off(events, callback);
 		};
 
-		this.on(events, wrappedCallback);
+		this.#on(events, callback, wrappedCallback);
 	}
 
 	trigger(event, ...args) {
