@@ -1,9 +1,6 @@
-export default class Emitter extends EventTarget {
+export default class Emitter {
+	eventTarget = new EventTarget();
 	listeners = new Map();
-
-	constructor() {
-		super();
-	}
 
 	#attachListener(events, originalCallback, wrappedCallback) {
 		for (const event of events.split(/\s+/)) {
@@ -17,7 +14,7 @@ export default class Emitter extends EventTarget {
 			}
 
 			callbackMap.set(originalCallback, wrappedCallback);
-			this.addEventListener(event, wrappedCallback);
+			this.eventTarget.addEventListener(event, wrappedCallback);
 		}
 	}
 
@@ -45,12 +42,12 @@ export default class Emitter extends EventTarget {
 			if (callbackMap) {
 				if (callback) {
 					if (callbackMap.has(callback)) {
-						this.removeEventListener(event, callbackMap.get(callback));
+						this.eventTarget.removeEventListener(event, callbackMap.get(callback));
 						callbackMap.delete(callback);
 					}
 				} else {
 					for (const [, wrappedCallback] of callbackMap) {
-						this.removeEventListener(event, wrappedCallback);
+						this.eventTarget.removeEventListener(event, wrappedCallback);
 					}
 
 					this.listeners.delete(event);
@@ -69,6 +66,6 @@ export default class Emitter extends EventTarget {
 	}
 
 	trigger(event, ...args) {
-		this.dispatchEvent(new CustomEvent(event, { detail: args }));
+		this.eventTarget.dispatchEvent(new CustomEvent(event, { detail: args }));
 	}
 }
