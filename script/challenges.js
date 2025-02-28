@@ -77,7 +77,6 @@ export function getElevatorConfig(count, capacity = 4) {
 	});
 }
 
-/* jshint laxcomma:true */
 export const challenges = [
 	{
 		options: { floorCount: 3, elevators: [{ capacity: 4 }], spawnRate: 0.3 },
@@ -158,4 +157,3 @@ export const challenges = [
 
 	{ options: { floorCount: 21, elevators: getElevatorConfig(8, [6, 8]), spawnRate: 1.5 }, condition: requireDemo() },
 ];
-/* jshint laxcomma:false */
