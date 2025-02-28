@@ -120,7 +120,7 @@
 					});
 				});
 				_.each(elevators, (elevator) => {
-					elevator.on("floor_button_pressed", (floorNum) => {
+					elevator.on("floor_button_pressed", (eventName, floorNum) => {
 						elevator.goToFloor(floorNum);
 					});
 					elevator.on("idle", () => {

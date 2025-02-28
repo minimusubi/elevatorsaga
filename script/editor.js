@@ -1,6 +1,7 @@
 import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
 import * as prettierPluginBabel from 'https://unpkg.com/prettier@3.5.2/plugins/babel.mjs';
 import * as prettierPluginEstree from 'https://unpkg.com/prettier@3.5.2/plugins/estree.mjs';
+import Emitter from './emitter.js';
 import config from './config.js';
 import { getCodeTemplate } from './util.js';
 import { getModuleFromUserCode } from '../script/base.js';
@@ -92,7 +93,7 @@ export const createEditor = () => {
 		cm.focus();
 	});
 
-	const returnObj = new riot.observable();
+	const returnObj = new Emitter();
 	const autoSaver = _.debounce(saveCode, 1000);
 	cm.on('change', () => {
 		autoSaver();

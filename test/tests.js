@@ -7,6 +7,7 @@ import {
 } from '../script/challenges.js';
 import Elevator from '../script/elevator.js';
 import ElevatorInterface from '../script/interfaces.js';
+import Emitter from '../script/emitter.js';
 import Movable from '../script/movable.js';
 import User from '../script/user.js';
 
@@ -126,7 +127,7 @@ describe('Elevator Saga', () => {
 		const DT_MAX = 1000.0 / 59;
 		beforeEach(() => {
 			controller = new WorldController(DT_MAX);
-			fakeWorld = new riot.observable();
+			fakeWorld = new Emitter();
 			fakeWorld.update = function (dt) {};
 			fakeWorld.init = function () {};
 			fakeWorld.updateDisplayPositions = function () {};
@@ -318,7 +319,7 @@ describe('Elevator Saga', () => {
 
 		it('emits no passing floor events when going from floor 0 to 1', () => {
 			e.on('passing_floor', handlers.someHandler);
-			e.on('passing_floor', (floorNum, direction) => {
+			e.on('passing_floor', (eventName, floorNum, direction) => {
 				console.log('Passing floor yo', floorNum, direction);
 			});
 			e.goToFloor(1);
@@ -338,7 +339,7 @@ describe('Elevator Saga', () => {
 			});
 			expect(e.currentFloor).toBe(2);
 			expect(handlers.someHandler.calls.count()).toEqual(1);
-			expect(handlers.someHandler.calls.mostRecent().args.slice(0, 1)).toEqual([1]);
+			expect(handlers.someHandler.calls.mostRecent().args.slice(1, 2)).toEqual([1]);
 		});
 		it('emits passing floor events when going from floor 0 to 3', () => {
 			e.on('passing_floor', handlers.someHandler);
@@ -349,8 +350,8 @@ describe('Elevator Saga', () => {
 			});
 			expect(e.currentFloor).toBe(3);
 			expect(handlers.someHandler.calls.count()).toEqual(2);
-			expect(handlers.someHandler.calls.argsFor(0).slice(0, 1)).toEqual([1]);
-			expect(handlers.someHandler.calls.argsFor(1).slice(0, 1)).toEqual([2]);
+			expect(handlers.someHandler.calls.argsFor(0).slice(1, 2)).toEqual([1]);
+			expect(handlers.someHandler.calls.argsFor(1).slice(1, 2)).toEqual([2]);
 		});
 		it('emits passing floor events when going from floor 3 to 0', () => {
 			e.on('passing_floor', handlers.someHandler);
@@ -361,12 +362,12 @@ describe('Elevator Saga', () => {
 			});
 			expect(e.currentFloor).toBe(3);
 			expect(handlers.someHandler.calls.count()).toEqual(2);
-			expect(handlers.someHandler.calls.argsFor(0).slice(0, 1)).toEqual([1]);
-			expect(handlers.someHandler.calls.argsFor(1).slice(0, 1)).toEqual([2]);
+			expect(handlers.someHandler.calls.argsFor(0).slice(1, 2)).toEqual([1]);
+			expect(handlers.someHandler.calls.argsFor(1).slice(1, 2)).toEqual([2]);
 		});
 		it('doesnt raise unexpected events when told to stop(ish) when passing floor', () => {
 			let passingFloorEventCount = 0;
-			e.on('passing_floor', (floorNum, direction) => {
+			e.on('passing_floor', (eventName, floorNum, direction) => {
 				expect(floorNum).toBe(1, 'floor being passed');
 				expect(direction).toBe('up');
 				passingFloorEventCount++;
@@ -410,7 +411,7 @@ describe('Elevator Saga', () => {
 				it('propagates stopped_at_floor event', () => {
 					elevInterface.on('stopped_at_floor', handlers.someHandler);
 					e.trigger('stopped_at_floor', 3);
-					expect(handlers.someHandler.calls.mostRecent().args.slice(0, 1)).toEqual([3]);
+					expect(handlers.someHandler.calls.mostRecent().args.slice(1, 2)).toEqual([3]);
 				});
 
 				it('does not propagate stopped event', () => {
@@ -517,7 +518,7 @@ describe('Elevator Saga', () => {
 				e.setFloorPosition(2);
 				elevInterface.goToFloor(0);
 				let passingFloorEventCount = 0;
-				elevInterface.on('passing_floor', (floorNum, direction) => {
+				elevInterface.on('passing_floor', (eventName, floorNum, direction) => {
 					passingFloorEventCount++;
 					// We only expect to be passing floor 1, but it is possible and ok that several
 					// such events are raised, due to possible overshoot.

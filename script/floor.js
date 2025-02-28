@@ -1,4 +1,6 @@
-export default class Floor extends riot.observable {
+import Emitter from './emitter.js';
+
+export default class Floor extends Emitter {
 	constructor(floorLevel, yPosition, errorHandler) {
 		super();
 

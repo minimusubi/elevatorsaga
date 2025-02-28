@@ -67,7 +67,7 @@ export default class User extends Movable {
 			this.moveToOverTime(pos[0], pos[1], 1, undefined, () => {
 				elevator.pressFloorButton(self.destinationFloor);
 			});
-			this.exitAvailableHandler = function (floorNum, elevator) {
+			this.exitAvailableHandler = function (eventName, floorNum, elevator) {
 				self.handleExit(elevator.currentFloor, elevator);
 			};
 			elevator.on('exit_available', this.exitAvailableHandler);

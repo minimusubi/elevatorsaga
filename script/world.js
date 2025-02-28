@@ -1,10 +1,11 @@
 import Elevator from './elevator.js';
 import ElevatorInterface from './interfaces.js';
+import Emitter from './emitter.js';
 import Floor from './floor.js';
 import User from './user.js';
 import config from './config.js';
 
-export class World extends riot.observable {
+export class World extends Emitter {
 	floorHeight;
 	floors;
 	elevators;
@@ -142,7 +143,7 @@ export class World extends riot.observable {
 		user.updateDisplayPosition(true);
 	}
 
-	#handleElevAvailability = function (elevator) {
+	#handleElevAvailability = function (eventName, elevator) {
 		// Use regular loops for memory/performance reasons
 		// Notify floors first because overflowing users
 		// will press buttons again.
@@ -246,7 +247,7 @@ export class World extends riot.observable {
 	}
 }
 
-export class WorldController extends riot.observable {
+export class WorldController extends Emitter {
 	constructor(dtMax) {
 		super();
 
@@ -316,10 +317,10 @@ export class WorldController extends riot.observable {
 		animationFrameRequester(updater);
 	}
 
-	handleUserCodeError(e) {
+	handleUserCodeError(eventName, error) {
 		this.setPaused(true);
-		console.log('Usercode error on update', e);
-		this.trigger('usercode_error', e);
+		console.log('Usercode error on update', error);
+		this.trigger('usercode_error', error);
 	}
 
 	setPaused(paused) {

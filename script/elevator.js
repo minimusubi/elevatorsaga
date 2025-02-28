@@ -7,7 +7,7 @@ import {
 } from './base.js';
 import Movable from './movable.js';
 
-function newElevStateHandler(elevator) {
+function newElevStateHandler(eventName, elevator) {
 	elevator.handleNewState();
 }
 
@@ -44,7 +44,7 @@ export default class Elevator extends Movable {
 
 		this.on('new_state', newElevStateHandler);
 
-		this.on('change:goingUpIndicator', (value) => {
+		this.on('change:goingUpIndicator', (eventName, value) => {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
@@ -52,7 +52,7 @@ export default class Elevator extends Movable {
 			}
 		});
 
-		this.on('change:goingDownIndicator', (value) => {
+		this.on('change:goingDownIndicator', (eventName, value) => {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {

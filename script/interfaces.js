@@ -1,10 +1,11 @@
 import { epsilonEquals, limitNumber } from './base.js';
+import Emitter from './emitter.js';
 
 // Interface that hides actual elevator object behind a more robust facade,
 // while also exposing relevant events, and providing some helper queue
 // functions that allow programming without async logic.
 
-export default class ElevatorInterface extends riot.observable {
+export default class ElevatorInterface extends Emitter {
 	#elevator = null;
 
 	constructor(elevator, floorCount, errorHandler) {
@@ -15,7 +16,7 @@ export default class ElevatorInterface extends riot.observable {
 		this.errorHandler = errorHandler;
 		this.destinationQueue = [];
 
-		elevator.on('stopped', (position) => {
+		elevator.on('stopped', (eventName, position) => {
 			if (this.destinationQueue.length && epsilonEquals(_.first(this.destinationQueue), position)) {
 				// Reached the destination, so remove element at front of queue
 				this.destinationQueue = _.rest(this.destinationQueue);
@@ -29,14 +30,14 @@ export default class ElevatorInterface extends riot.observable {
 			}
 		});
 
-		elevator.on('passing_floor', (floorNum, direction) => {
+		elevator.on('passing_floor', (eventName, floorNum, direction) => {
 			this.tryTrigger('passing_floor', floorNum, direction);
 		});
 
-		elevator.on('stopped_at_floor', (floorNum) => {
+		elevator.on('stopped_at_floor', (eventName, floorNum) => {
 			this.tryTrigger('stopped_at_floor', floorNum);
 		});
-		elevator.on('floor_button_pressed', (floorNum) => {
+		elevator.on('floor_button_pressed', (eventName, floorNum) => {
 			this.tryTrigger('floor_button_pressed', floorNum);
 		});
 	}

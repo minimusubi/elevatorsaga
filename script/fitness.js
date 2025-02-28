@@ -34,8 +34,8 @@ function calculateFitness(challenge, codeObj, stepSize, stepsToSimulate) {
 	const world = new World(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);
 
-	controller.on('usercode_error', (e) => {
-		result.error = e;
+	controller.on('usercode_error', (eventName, error) => {
+		result.error = error;
 	});
 	world.on('stats_changed', () => {
 		result.transportedPerSec = world.transportedPerSec;

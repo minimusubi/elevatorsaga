@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	editor.on('code_success', () => {
 		presentCodeStatus(codestatus, codeStatusTempl);
 	});
-	editor.on('usercode_error', (error) => {
+	editor.on('usercode_error', (eventName, error) => {
 		presentCodeStatus(codestatus, codeStatusTempl, error);
 	});
 	editor.on('change', () => {

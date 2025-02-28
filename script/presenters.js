@@ -131,7 +131,7 @@ export function presentWorld(worldElement, world, floorTempl, elevatorTempl, ele
 		const floorFragment = makeFragment(riot.render(floorTempl, floor));
 		const up = floorFragment.querySelector('.up');
 		const down = floorFragment.querySelector('.down');
-		floor.on('buttonstate_change', (buttonStates) => {
+		floor.on('buttonstate_change', (eventName, buttonStates) => {
 			up.classList.toggle('activated', buttonStates.up !== '');
 			down.classList.toggle('activated', buttonStates.down !== '');
 		});
@@ -170,13 +170,13 @@ export function presentWorld(worldElement, world, floorTempl, elevatorTempl, ele
 		elevator.on('new_display_state', () => {
 			setTransformPos(elevatorElement, elevator.worldX, elevator.worldY);
 		});
-		elevator.on('new_current_floor', (floor) => {
+		elevator.on('new_current_floor', (eventName, floor) => {
 			elem_floorindicator.textContent = floor;
 		});
-		elevator.on('floor_buttons_changed', (states, indexChanged) => {
+		elevator.on('floor_buttons_changed', (eventName, states, indexChanged) => {
 			buttons[indexChanged].classList.toggle('activated', states[indexChanged]);
 		});
-		elevator.on('indicatorstate_change', (indicatorStates) => {
+		elevator.on('indicatorstate_change', (eventName, indicatorStates) => {
 			elevatorElement.querySelector('.up').classList.toggle('activated', indicatorStates.up);
 			elevatorElement.querySelector('.down').classList.toggle('activated', indicatorStates.down);
 		});
@@ -190,7 +190,7 @@ export function presentWorld(worldElement, world, floorTempl, elevatorTempl, ele
 		worldElement.appendChild(setUpElevator(elevator));
 	}
 
-	world.on('new_user', (user) => {
+	world.on('new_user', (eventName, user) => {
 		const userElement = makeFragment(
 			riot.render(userTempl, { u: user, state: user.done ? 'leaving' : '' }),
 		).firstChild;
