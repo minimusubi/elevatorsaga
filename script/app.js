@@ -61,9 +61,9 @@ class App extends Emitter {
 		super();
 
 		this.editor = editor;
-		this.worldController.on('usercode_error', (e) => {
-			console.log('World raised code error', e);
-			editor.trigger('usercode_error', e);
+		this.worldController.on('usercode_error', (eventName, error) => {
+			console.log('World raised code error', error);
+			editor.trigger('usercode_error', error);
 		});
 		console.log(this.worldController);
 	}

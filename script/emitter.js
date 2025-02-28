@@ -21,7 +21,7 @@ export default class Emitter {
 	#on(events, originalCallback, preWrappedCallback = null) {
 		const callable = preWrappedCallback ?? originalCallback;
 		let wrappedCallback = (event) => {
-			callable(...event.detail);
+			callable(event.type, ...event.detail);
 		};
 
 		this.#attachListener(events, originalCallback, wrappedCallback);
