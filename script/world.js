@@ -261,7 +261,9 @@ export class WorldController extends Emitter {
 		let lastT = null;
 		let firstUpdate = true;
 		let timeSinceStatsUpdate = Infinity;
-		world.on('usercode_error', this.handleUserCodeError.bind(this));
+		world.on('usercode_error', (eventName, error) => {
+			this.handleUserCodeError(error);
+		});
 		const updater = (t) => {
 			if (!this.isPaused && !world.challengeEnded && lastT !== null) {
 				if (firstUpdate) {
@@ -317,7 +319,7 @@ export class WorldController extends Emitter {
 		animationFrameRequester(updater);
 	}
 
-	handleUserCodeError(eventName, error) {
+	handleUserCodeError(error) {
 		this.setPaused(true);
 		console.log('Usercode error on update', error);
 		this.trigger('usercode_error', error);
