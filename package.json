@@ -1,6 +1,11 @@
 {
 	"name": "elevatorsaga",
+	"type": "module",
 	"scripts": {
+		"build": "npm run clean && npm run compile ; npm run copy",
+		"clean": "npx rimraf dist",
+		"compile": "npx tsc",
+		"copy": "node copyFiles.js",
 		"lint": "npx eslint --flag unstable_config_lookup_from_file script/*.js libs/riot.js test/tests.js ",
 		"format": "npx prettier --write ."
 	},
@@ -9,6 +14,14 @@
 		"eslint": "^9.21.0",
 		"eslint-config-prettier": "^10.0.1",
 		"globals": "^16.0.0",
-		"prettier": "^3.5.2"
+		"prettier": "^3.5.2",
+		"typescript-eslint": "^8.25.0"
+	},
+	"dependencies": {
+		"@types/jasmine": "^5.1.7",
+		"fs-extra": "^11.3.0",
+		"glob": "^11.0.1",
+		"rimraf": "^6.0.1",
+		"typescript": "5.7"
 	}
 }
