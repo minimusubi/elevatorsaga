@@ -26,10 +26,12 @@ const fitnessChallenges = [
 	},
 ];
 
+type Result = { error?; transportedPerSec; avgWaitTime; transportedCount };
+
 // Simulation without visualisation
 function calculateFitness(challenge, codeObj, stepSize, stepsToSimulate) {
 	const controller = new WorldController(stepSize);
-	const result = {};
+	const result = {} as Result;
 
 	const world = new World(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);

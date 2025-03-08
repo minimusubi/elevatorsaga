@@ -7,6 +7,9 @@ import Emitter from './emitter.js';
 
 export default class ElevatorInterface extends Emitter {
 	#elevator = null;
+	floorCount;
+	errorHandler;
+	destinationQueue = [];
 
 	constructor(elevator, floorCount, errorHandler) {
 		super();

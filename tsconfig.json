@@ -4,6 +4,9 @@
 		"target": "esnext",
 
 		"strict": true,
+		"strictNullChecks": false,
+		"noImplicitAny": false,
+
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 

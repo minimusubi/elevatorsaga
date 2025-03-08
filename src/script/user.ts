@@ -1,14 +1,18 @@
 import Movable from './movable.js';
 
 export default class User extends Movable {
+	weight;
+	currentFloor = 0;
+	destinationFloor = 0;
+	done = false;
+	removeMe = false;
+	displayType;
+	exitAvailableHandler;
+
 	constructor(weight) {
 		super();
 
 		this.weight = weight;
-		this.currentFloor = 0;
-		this.destinationFloor = 0;
-		this.done = false;
-		this.removeMe = false;
 	}
 
 	appearOnFloor(floor, destinationFloorNum) {

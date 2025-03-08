@@ -205,7 +205,7 @@ export function presentWorld(worldElement, world, floorTempl, elevatorTempl, ele
 	});
 }
 
-export function presentCodeStatus(parent, templ, error) {
+export function presentCodeStatus(parent, templ, error?) {
 	console.log(error);
 	const errorDisplay = error ? 'block' : 'none';
 	const successDisplay = error ? 'none' : 'block';

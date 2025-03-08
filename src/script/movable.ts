@@ -13,16 +13,15 @@ const DEFAULT_INTERPOLATOR = coolInterpolate;
 const _tmpPosStorage = [0, 0];
 
 export default class Movable extends Emitter {
+	x = 0.0;
+	y = 0.0;
+	parent = null;
+	worldX = 0.0;
+	worldY = 0.0;
+	currentTask = null;
+
 	constructor() {
 		super();
-
-		this.x = 0.0;
-		this.y = 0.0;
-		this.parent = null;
-		this.worldX = 0.0;
-		this.worldY = 0.0;
-		this.currentTask = null;
-
 		this.trigger('new_state', this);
 	}
 
@@ -30,7 +29,7 @@ export default class Movable extends Emitter {
 		return value0 + (value1 - value0) * x;
 	}
 
-	updateDisplayPosition(forceTrigger) {
+	updateDisplayPosition(forceTrigger = false) {
 		this.getWorldPosition(_tmpPosStorage);
 		const oldX = this.worldX;
 		const oldY = this.worldY;
