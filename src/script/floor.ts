@@ -1,13 +1,17 @@
 import Emitter from './emitter.js';
 
 export default class Floor extends Emitter {
+	level: number;
+	yPosition: number;
+	errorHandler;
+	buttonStates = { up: '', down: '' };
+
 	constructor(floorLevel, yPosition, errorHandler) {
 		super();
 
 		this.level = floorLevel;
 		this.yPosition = yPosition;
 		this.errorHandler = errorHandler;
-		this.buttonStates = { up: '', down: '' };
 	}
 
 	tryTrigger(event, ...args) {

@@ -13,7 +13,7 @@ import {
 import Emitter from './emitter.js';
 import { challenges } from './challenges.js';
 import config from './config.js';
-import { createEditor } from './editor.js';
+import { Editor } from './editor.js';
 import { getTemplate } from './util.js';
 import { isUserError } from './base.js';
 
@@ -40,6 +40,7 @@ class App extends Emitter {
 	world = undefined;
 	currentChallengeIndex = 0;
 	highestChallengeIndex = 0;
+	editor;
 
 	element = {
 		innerWorld: document.querySelector('.innerworld'),
@@ -76,7 +77,7 @@ class App extends Emitter {
 		}
 	}
 
-	async startChallenge(challengeIndex, autoStart) {
+	async startChallenge(challengeIndex, autoStart = false) {
 		if (typeof this.world !== 'undefined') {
 			this.world.unWind();
 			// TODO: Investigate if memory leaks happen here
@@ -88,7 +89,7 @@ class App extends Emitter {
 		}
 
 		this.world = new World(challenges[challengeIndex].options);
-		window.world = this.world;
+		(window as any).world = this.world;
 
 		clearAll([this.element.innerWorld, this.element.feedback]);
 		presentStats(this.element.stats, this.world);
@@ -112,7 +113,7 @@ class App extends Emitter {
 		);
 
 		this.worldController.on('timescale_changed', () => {
-			localStorage.setItem(config.STORAGE_KEY_TIMESCALE, this.worldController.timeScale);
+			localStorage.setItem(config.STORAGE_KEY_TIMESCALE, this.worldController.timeScale as any);
 			presentChallenge(
 				this.element.challenge,
 				challenges[challengeIndex],
@@ -160,7 +161,7 @@ class App extends Emitter {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	const editor = createEditor();
+	const editor = new Editor();
 	const codestatus = document.querySelector('.codestatus');
 	const codeStatusTempl = getTemplate('codestatus-template');
 
@@ -206,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const hash = path.match(/#(.+)/)?.[1] ?? '';
 		params = _.reduce(
 			hash.split(','),
-			(result, p) => {
+			(result, p: string) => {
 				const match = p.match(/(\w+)=(\w+$)/);
 				if (match) {
 					result[match[1]] = match[2];
@@ -218,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		let requestedChallenge = 0;
 		let autoStart = false;
 		let timeScale = parseFloat(localStorage.getItem(config.STORAGE_KEY_TIMESCALE)) || 2.0;
-		_.each(params, (val, key) => {
+		_.each(params, (val: string, key) => {
 			if (key === 'challenge') {
 				requestedChallenge = _.parseInt(val) - 1;
 				if (requestedChallenge < 0 || requestedChallenge >= challenges.length) {

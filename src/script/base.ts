@@ -24,7 +24,7 @@ export const accelerationNeededToAchieveChangeDistance = function (currentSpeed,
 // Fake frame requester helper used for testing and fitness simulations
 export const createFrameRequester = function (timeStep) {
 	let currentCb = null;
-	const requester = {};
+	const requester: any = {};
 	requester.currentT = 0.0;
 	requester.register = function (cb) {
 		currentCb = cb;

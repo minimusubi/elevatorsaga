@@ -38,6 +38,7 @@ describe('Elevator Saga', () => {
 		});
 		it('disallows incorrect creation', () => {
 			const faultyCreation = function () {
+				// @ts-ignore
 				Movable();
 			};
 			expect(faultyCreation).toThrow();
@@ -54,7 +55,7 @@ describe('Elevator Saga', () => {
 		let u = null;
 
 		beforeEach(() => {
-			u = new User();
+			u = new User(.42);
 		});
 		it('updates display position when told to', () => {
 			u.moveTo(1.0, 1.0);
@@ -227,7 +228,7 @@ describe('Elevator Saga', () => {
 		const floorHeight = 44;
 
 		beforeEach(() => {
-			e = new Elevator(1.5, floorCount, floorHeight);
+			e = new Elevator(1.5, floorCount, floorHeight, 4);
 			e.setFloorPosition(0);
 		});
 
@@ -390,6 +391,7 @@ describe('Elevator Saga', () => {
 				timeForwarder(5.0, STEPSIZE, (dt) => {
 					e.update(dt);
 					e.updateElevatorMovement(dt);
+					// @ts-ignore
 					expect(e.getExactCurrentFloor()).toBeWithinRange(1.0, 3.0, `(STEPSIZE is ${STEPSIZE})`);
 				});
 				expect(e.getExactCurrentFloor()).toEqual(3.0);
@@ -402,9 +404,9 @@ describe('Elevator Saga', () => {
 			let e = null;
 			let elevInterface = null;
 			beforeEach(() => {
-				e = new Elevator(1.5, 4, 40);
+				e = new Elevator(1.5, 4, 40, 4);
 				e.setFloorPosition(0);
-				elevInterface = new ElevatorInterface(e, 4);
+				elevInterface = new ElevatorInterface(e, 4, null);
 			});
 
 			describe('events', () => {

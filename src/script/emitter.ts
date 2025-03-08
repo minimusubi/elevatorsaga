@@ -31,7 +31,7 @@ export default class Emitter {
 		this.#on(events, callback);
 	}
 
-	off(events, callback) {
+	off(events, callback?) {
 		if (events === '*') {
 			events = Array.from(this.listeners.keys()).join(' ');
 		}

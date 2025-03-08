@@ -6,12 +6,36 @@ import {
 	limitNumber,
 } from './base.js';
 import Movable from './movable.js';
+import User from './user.js';
 
 function newElevStateHandler(eventName, elevator) {
 	elevator.handleNewState();
 }
 
 export default class Elevator extends Movable {
+	ACCELERATION: number;
+	DECELERATION: number;
+	MAXSPEED: number;
+	floorCount: number;
+	floorHeight: number;
+	maxUsers: number;
+	destinationY: number;
+	velocityY = 0.0;
+	// isMoving flag is needed when going to same floor again - need to re-raise events
+	isMoving = false;
+
+	goingDownIndicator = true;
+	goingUpIndicator = true;
+
+	currentFloor = 0;
+	previousTruncFutureFloorIfStopped = 0;
+	buttonStates;
+
+	moveCount = 0;
+	removed = false;
+	userSlots: { pos: number[]; user: User }[];
+	width: number;
+
 	constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers) {
 		super();
 
@@ -21,21 +45,9 @@ export default class Elevator extends Movable {
 		this.floorCount = floorCount;
 		this.floorHeight = floorHeight;
 		this.maxUsers = maxUsers || 4;
-		this.destinationY = 0.0;
-		this.velocityY = 0.0;
-		// isMoving flag is needed when going to same floor again - need to re-raise events
-		this.isMoving = false;
-
-		this.goingDownIndicator = true;
-		this.goingUpIndicator = true;
-
-		this.currentFloor = 0;
-		this.previousTruncFutureFloorIfStopped = 0;
 		this.buttonStates = _.map(_.range(floorCount), (e, i) => {
 			return false;
 		});
-		this.moveCount = 0;
-		this.removed = false;
 		this.userSlots = _.map(_.range(this.maxUsers), (user, i) => {
 			return { pos: [2 + i * 10, 30], user: null };
 		});

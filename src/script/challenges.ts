@@ -67,7 +67,7 @@ export const requireDemo = function () {
 	};
 };
 
-export function getElevatorConfig(count, capacity = 4) {
+export function getElevatorConfig(count, capacity: number | number[] = 4) {
 	if (typeof capacity !== 'object') {
 		capacity = [capacity];
 	}

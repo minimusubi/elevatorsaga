@@ -143,7 +143,7 @@ export class World extends Emitter {
 		user.updateDisplayPosition(true);
 	}
 
-	#handleElevAvailability = function (eventName, elevator) {
+	#handleElevAvailability = (eventName, elevator) => {
 		// Use regular loops for memory/performance reasons
 		// Notify floors first because overflowing users
 		// will press buttons again.
@@ -159,9 +159,9 @@ export class World extends Emitter {
 				user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]);
 			}
 		}
-	}.bind(this);
+	}
 
-	#handleButtonRepressing = function (eventName, floor) {
+	#handleButtonRepressing = (eventName, floor) => {
 		// Need randomize iteration order or we'll tend to fill upp first elevator
 		for (let i = 0, len = this.elevators.length, offset = _.random(len - 1); i < len; ++i) {
 			const elevIndex = (i + offset) % len;
@@ -184,7 +184,7 @@ export class World extends Emitter {
 				}
 			}
 		}
-	}.bind(this);
+	}
 
 	update(dt) {
 		this.elapsedTime += dt;
@@ -248,6 +248,10 @@ export class World extends Emitter {
 }
 
 export class WorldController extends Emitter {
+	dtMax;
+	timeScale = 1.0;
+	isPaused = true;
+
 	constructor(dtMax) {
 		super();
 
@@ -256,7 +260,7 @@ export class WorldController extends Emitter {
 		this.isPaused = true;
 	}
 
-	start(world, codeObj, animationFrameRequester, autoStart) {
+	start(world, codeObj, animationFrameRequester, autoStart = false) {
 		this.isPaused = true;
 		let lastT = null;
 		let firstUpdate = true;
