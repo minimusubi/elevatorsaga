@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"module": "ESNext",
+		"module": "NodeNext",
 		"target": "esnext",
 
 		"strict": true,
@@ -9,7 +9,10 @@
 
 		"outDir": "dist",
 		"rootDir": "src",
-		"sourceMap": true
+		"sourceMap": true,
+
+		"declaration": true,
+		"declarationDir": "dist/types"
 	},
 
 	"include": ["src"],

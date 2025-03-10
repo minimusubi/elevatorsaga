@@ -1,6 +1,6 @@
+import { Challenge, getElevatorConfig } from './challenges.js';
+import { UserModule, createFrameRequester, getModuleFromUserCode } from './base.js';
 import { World, WorldController } from './world.js';
-import { createFrameRequester, getModuleFromUserCode } from './base.js';
-import { getElevatorConfig } from './challenges.js';
 
 const requireNothing = function () {
 	return {
@@ -26,10 +26,17 @@ const fitnessChallenges = [
 	},
 ];
 
+interface FitnessResult {
+	error?: unknown;
+	transportedPerSec?: number;
+	avgWaitTime?: number;
+	transportedCount?: number;
+}
+
 // Simulation without visualisation
-function calculateFitness(challenge, codeObj, stepSize, stepsToSimulate) {
+function calculateFitness(challenge: Challenge, codeObj: UserModule, stepSize: number, stepsToSimulate: number) {
 	const controller = new WorldController(stepSize);
-	const result = {};
+	const result: Partial<FitnessResult> = {};
 
 	const world = new World(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);
@@ -60,20 +67,20 @@ function makeAverageResult(results) {
 	return { options: results[0].options, result: averagedResult };
 }
 
-function doFitnessSuite(codeStr, runCount) {
-	let codeObj;
+function doFitnessSuite(codeStr: string, runCount: number) {
+	let userModule;
 	try {
-		codeObj = getModuleFromUserCode(codeStr);
+		userModule = getModuleFromUserCode(codeStr);
 	} catch (e) {
 		return { error: `${e}` };
 	}
-	console.log('Fitness testing code', codeObj);
-	let error = null;
+	console.log('Fitness testing code', userModule);
+	let error: unknown | null = null;
 
 	const testruns = [];
 	_.times(runCount, () => {
 		const results = _.map(fitnessChallenges, (challenge) => {
-			const fitness = calculateFitness(challenge, codeObj, 1000.0 / 60.0, 12000);
+			const fitness = calculateFitness(challenge, userModule, 1000.0 / 60.0, 12000);
 			if (fitness.error) {
 				error = fitness.error;
 				return;
@@ -97,7 +104,7 @@ function doFitnessSuite(codeStr, runCount) {
 	return averagedResults;
 }
 
-function fitnessSuite(codeStr, preferWorker, callback) {
+function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results: any) => void) {
 	if (!!Worker && preferWorker) {
 		// Web workers are available, neat.
 		try {

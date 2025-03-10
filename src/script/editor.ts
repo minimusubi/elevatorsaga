@@ -1,3 +1,4 @@
+import type * as monaco from 'monaco-editor';
 import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
 import * as prettierPluginBabel from 'https://unpkg.com/prettier@3.5.2/plugins/babel.mjs';
 import * as prettierPluginEstree from 'https://unpkg.com/prettier@3.5.2/plugins/estree.mjs';
@@ -5,8 +6,9 @@ import Emitter from './emitter.js';
 import config from './config.js';
 import { getCodeTemplate } from './util.js';
 import { getModuleFromUserCode } from '../script/base.js';
+import loader from 'https://esm.sh/@monaco-editor/loader@1.5.0';
 
-async function format(code) {
+async function format(code: string) {
 	return await prettier.format(code, {
 		parser: 'babel',
 		plugins: [prettierPluginEstree, prettierPluginBabel],
@@ -35,95 +37,110 @@ async function format(code) {
 	});
 }
 
-export const createEditor = () => {
-	const cm = CodeMirror.fromTextArea(document.getElementById('code'), {
-		lineNumbers: true,
-		indentUnit: 4,
-		indentWithTabs: false,
-		theme: 'solarized light',
-		mode: 'javascript',
-		autoCloseBrackets: true,
-		extraKeys: {
-			// the following Tab key mapping is from http://codemirror.net/doc/manual.html#keymaps
-			Tab: function (cm) {
-				const spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-				cm.replaceSelection(spaces);
-			},
-		},
-	});
+type EditorEvents = { apply_code: []; code_success: []; usercode_error: [error: unknown]; change: [] };
 
-	const reset = function () {
-		cm.setValue(getCodeTemplate('default-elev-implementation'));
-	};
-	const saveCode = function () {
-		localStorage.setItem(config.STORAGE_KEY_USERCODE, cm.getValue());
-		document.querySelector('#save_message').textContent = `Code saved ${new Date().toLocaleTimeString()}`;
-		returnObj.trigger('change');
-	};
+export class Editor extends Emitter<EditorEvents> {
+	editor: monaco.editor.IStandaloneCodeEditor;
 
-	const existingCode = localStorage.getItem(config.STORAGE_KEY_USERCODE);
-	if (existingCode) {
-		cm.setValue(existingCode);
-	} else {
-		reset();
+	static async create() {
+		// @ts-expect-error Something is wrong with my typings
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		const monaco = (await loader.init()) as loader.Monaco;
+		const editor = monaco.editor.create(document.getElementById('code')!, {
+			language: 'javascript',
+			insertSpaces: false,
+		});
+
+		return new Editor(editor);
 	}
 
-	document.querySelector('#button_save').addEventListener('click', () => {
-		saveCode();
-		cm.focus();
-	});
+	/**
+	 * Do not explicity construct new instances of this class. Use Editor.create() instead.
+	 */
+	constructor(editor: monaco.editor.IStandaloneCodeEditor) {
+		super();
 
-	document.querySelector('#button_reset').addEventListener('click', () => {
-		if (confirm('Do you really want to reset to the default implementation?')) {
-			localStorage.setItem(config.STORAGE_KEY_USERCODE_BACKUP, cm.getValue());
+		this.editor = editor;
+
+		const saveCode = () => {
+			localStorage.setItem(config.STORAGE_KEY_USERCODE, this.getContent());
+			document.querySelector('#save_message')!.textContent = `Code saved ${new Date().toLocaleTimeString()}`;
+			this.trigger('change');
+		};
+		const reset = () => {
+			this.setContent(getCodeTemplate('default-elev-implementation'));
+		};
+
+		const autoSaver = _.debounce(saveCode, 1000);
+		this.editor.onDidChangeModelContent(() => {
+			autoSaver();
+		});
+
+		const existingCode = localStorage.getItem(config.STORAGE_KEY_USERCODE);
+		if (existingCode) {
+			this.setContent(existingCode);
+		} else {
 			reset();
 		}
-		cm.focus();
-	});
 
-	document.querySelector('#button_resetundo').addEventListener('click', () => {
-		if (confirm('Do you want to bring back the code as before the last reset?')) {
-			cm.setValue(localStorage.getItem(config.STORAGE_KEY_USERCODE_BACKUP) || '');
-		}
-		cm.focus();
-	});
+		document.querySelector('#button_save')!.addEventListener('click', () => {
+			saveCode();
+			this.editor.focus();
+		});
 
-	document.querySelector('#button_format').addEventListener('click', async () => {
-		cm.setValue((await format(cm.getValue())) || '');
-		cm.focus();
-	});
+		document.querySelector('#button_reset')!.addEventListener('click', () => {
+			if (confirm('Do you really want to reset to the default implementation?')) {
+				localStorage.setItem(config.STORAGE_KEY_USERCODE_BACKUP, this.getContent());
+				reset();
+			}
+			this.editor.focus();
+		});
 
-	const returnObj = new Emitter();
-	const autoSaver = _.debounce(saveCode, 1000);
-	cm.on('change', () => {
-		autoSaver();
-	});
+		document.querySelector('#button_resetundo')!.addEventListener('click', () => {
+			if (confirm('Do you want to bring back the code as before the last reset?')) {
+				this.setContent(localStorage.getItem(config.STORAGE_KEY_USERCODE_BACKUP) || '');
+			}
+			this.editor.focus();
+		});
 
-	returnObj.getCodeObj = async function () {
+		// The async callback returns a promise , but typings expect void
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		document.querySelector('#button_format')!.addEventListener('click', async () => {
+			const content = await format(this.getContent());
+			this.setContent(content || '');
+			this.editor.focus();
+		});
+
+		document.querySelector('#button_apply')!.addEventListener('click', () => {
+			this.trigger('apply_code');
+		});
+	}
+
+	async getUserModule() {
 		console.log('Getting code...');
-		const code = cm.getValue();
-		let obj;
+		const code = this.getContent();
+
 		try {
-			obj = await getModuleFromUserCode(code);
-			returnObj.trigger('code_success');
+			const module = await getModuleFromUserCode(code);
+			this.trigger('code_success');
+
+			return module;
 		} catch (e) {
-			returnObj.trigger('usercode_error', e);
+			this.trigger('usercode_error', e);
 			return null;
 		}
-		return obj;
-	};
-	returnObj.setCode = function (code) {
-		cm.setValue(code);
-	};
-	returnObj.getCode = function () {
-		return cm.getValue();
-	};
-	returnObj.setDevTestCode = function () {
-		cm.setValue(getCodeTemplate('devtest-elev-implementation'));
-	};
+	}
 
-	document.querySelector('#button_apply').addEventListener('click', () => {
-		returnObj.trigger('apply_code');
-	});
-	return returnObj;
-};
+	setContent(code: string) {
+		console.log('setting code', code);
+		this.editor.setValue(code);
+	}
+
+	getContent() {
+		return this.editor.getValue();
+	}
+
+	setDevTestCode() {
+		this.setContent(getCodeTemplate('devtest-elev-implementation'));
+	}
+}

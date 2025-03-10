@@ -1,9 +1,15 @@
-export function getTemplate(name) {
-	return document.getElementById(name).innerHTML.trim();
+export function getTemplate(name: string) {
+	const element = document.getElementById(name);
+
+	if (!element) {
+		throw new Error(`No template found: ${name}`);
+	}
+
+	return element.innerHTML.trim();
 }
 
-export function getCodeTemplate(name) {
-	const contents = document.getElementById(name).textContent;
+export function getCodeTemplate(name: string) {
+	const contents = document.getElementById(name)!.textContent ?? '';
 	let indentCount = 0;
 
 	// Remove indentation added by the fact that the templates in index.html are indented
@@ -13,7 +19,7 @@ export function getCodeTemplate(name) {
 		.split('\n')
 		.map((string, index) => {
 			if (index === 1) {
-				indentCount = string.match(/^\t+/)[0].length;
+				indentCount = string.match(/^\t+/)![0].length;
 			}
 
 			return string.substring(indentCount);

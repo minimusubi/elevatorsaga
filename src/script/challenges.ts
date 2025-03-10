@@ -1,7 +1,9 @@
-export const requireUserCountWithinTime = function (userCount, timeLimit) {
+import { World, WorldOptions } from './world.js';
+
+export const requireUserCountWithinTime = function (userCount: number, timeLimit: number) {
 	return {
 		description: `Transport <span class='emphasis-color'>${userCount}</span> people in <span class='emphasis-color'>${timeLimit.toFixed(0)}</span> seconds or less`,
-		evaluate: function (world) {
+		evaluate: function (world: World) {
 			if (world.elapsedTime >= timeLimit || world.transportedCounter >= userCount) {
 				return world.elapsedTime <= timeLimit && world.transportedCounter >= userCount;
 			} else {
@@ -11,10 +13,10 @@ export const requireUserCountWithinTime = function (userCount, timeLimit) {
 	};
 };
 
-export const requireUserCountWithMaxWaitTime = function (userCount, maxWaitTime) {
+export const requireUserCountWithMaxWaitTime = function (userCount: number, maxWaitTime: number) {
 	return {
 		description: `Transport <span class='emphasis-color'>${userCount}</span> people and let no one wait more than <span class='emphasis-color'>${maxWaitTime.toFixed(1)}</span> seconds`,
-		evaluate: function (world) {
+		evaluate: function (world: World) {
 			if (world.maxWaitTime >= maxWaitTime || world.transportedCounter >= userCount) {
 				return world.maxWaitTime <= maxWaitTime && world.transportedCounter >= userCount;
 			} else {
@@ -24,10 +26,14 @@ export const requireUserCountWithMaxWaitTime = function (userCount, maxWaitTime)
 	};
 };
 
-export const requireUserCountWithinTimeWithMaxWaitTime = function (userCount, timeLimit, maxWaitTime) {
+export const requireUserCountWithinTimeWithMaxWaitTime = function (
+	userCount: number,
+	timeLimit: number,
+	maxWaitTime: number,
+) {
 	return {
 		description: `Transport <span class='emphasis-color'>${userCount}</span> people in <span class='emphasis-color'>${timeLimit.toFixed(0)}</span> seconds or less and let no one wait more than <span class='emphasis-color'>${maxWaitTime.toFixed(1)}</span> seconds`,
-		evaluate: function (world) {
+		evaluate: function (world: World) {
 			if (
 				world.elapsedTime >= timeLimit ||
 				world.maxWaitTime >= maxWaitTime ||
@@ -45,10 +51,10 @@ export const requireUserCountWithinTimeWithMaxWaitTime = function (userCount, ti
 	};
 };
 
-export const requireUserCountWithinMoves = function (userCount, moveLimit) {
+export const requireUserCountWithinMoves = function (userCount: number, moveLimit: number) {
 	return {
 		description: `Transport <span class='emphasis-color'>${userCount}</span> people using <span class='emphasis-color'>${moveLimit}</span> elevator moves or less`,
-		evaluate: function (world) {
+		evaluate: function (world: World) {
 			if (world.moveCount >= moveLimit || world.transportedCounter >= userCount) {
 				return world.moveCount <= moveLimit && world.transportedCounter >= userCount;
 			} else {
@@ -67,7 +73,7 @@ export const requireDemo = function () {
 	};
 };
 
-export function getElevatorConfig(count, capacity = 4) {
+export function getElevatorConfig(count: number, capacity: number | number[] = 4) {
 	if (typeof capacity !== 'object') {
 		capacity = [capacity];
 	}
@@ -77,7 +83,12 @@ export function getElevatorConfig(count, capacity = 4) {
 	});
 }
 
-export const challenges = [
+export interface Challenge {
+	options: Partial<WorldOptions>;
+	condition: { description: string; evaluate: (world: World) => boolean | null };
+}
+
+export const challenges: Challenge[] = [
 	{
 		options: { floorCount: 3, elevators: [{ capacity: 4 }], spawnRate: 0.3 },
 		condition: requireUserCountWithinTime(15, 60),

@@ -6,13 +6,60 @@ import {
 	limitNumber,
 } from './base.js';
 import Movable from './movable.js';
+import User from './user.js';
 
-function newElevStateHandler(eventName, elevator) {
+function newElevStateHandler(eventName: string, elevator: Elevator) {
 	elevator.handleNewState();
 }
 
-export default class Elevator extends Movable {
-	constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers) {
+interface UserSlot {
+	pos: number[];
+	user: User | null;
+}
+
+interface ElevatorIndicatorStates {
+	up: boolean;
+	down: boolean;
+}
+
+export type ElevatorEvents = {
+	new_state: [elevator: Elevator];
+	new_display_state: [elevator: Elevator];
+	indicatorstate_change: [indicatorStates: ElevatorIndicatorStates];
+	'change:goingUpIndicator': [state: boolean];
+	'change:goingDownIndicator': [state: boolean];
+	floor_button_pressed: [floor: number];
+	floor_buttons_changed: [states: boolean[], floor: number];
+	stopped: [floor: number];
+	stopped_at_floor: [floor: number];
+	exit_available: [floor: number, elevator: Elevator];
+	entrance_available: [elevator: Elevator];
+	new_current_floor: [floor: number];
+	passing_floor: [floor: number, 'up' | 'down'];
+};
+
+export default class Elevator extends Movable<ElevatorEvents> {
+	ACCELERATION: number;
+	DECELERATION: number;
+	MAXSPEED: number;
+	floorCount: number;
+	floorHeight: number;
+	maxUsers: number;
+	destinationY = 0.0;
+	velocityY = 0.0;
+	// isMoving flag is needed when going to same floor again - need to re-raise events
+	isMoving = false;
+	goingDownIndicator = true;
+	goingUpIndicator = true;
+	currentFloor = 0;
+	previousTruncFutureFloorIfStopped = 0;
+	buttonStates: boolean[];
+	moveCount = 0;
+	removed = false;
+	userSlots: UserSlot[];
+	width: number;
+
+	constructor(speedFloorsPerSec: number, floorCount: number, floorHeight: number, maxUsers = 4) {
 		super();
 
 		this.ACCELERATION = floorHeight * 2.1;
@@ -20,22 +67,11 @@ export default class Elevator extends Movable {
 		this.MAXSPEED = floorHeight * speedFloorsPerSec;
 		this.floorCount = floorCount;
 		this.floorHeight = floorHeight;
-		this.maxUsers = maxUsers || 4;
-		this.destinationY = 0.0;
-		this.velocityY = 0.0;
-		// isMoving flag is needed when going to same floor again - need to re-raise events
-		this.isMoving = false;
+		this.maxUsers = maxUsers;
 
-		this.goingDownIndicator = true;
-		this.goingUpIndicator = true;
-
-		this.currentFloor = 0;
-		this.previousTruncFutureFloorIfStopped = 0;
 		this.buttonStates = _.map(_.range(floorCount), (e, i) => {
 			return false;
 		});
-		this.moveCount = 0;
-		this.removed = false;
 		this.userSlots = _.map(_.range(this.maxUsers), (user, i) => {
 			return { pos: [2 + i * 10, 30], user: null };
 		});
@@ -48,6 +84,7 @@ export default class Elevator extends Movable {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
+				// TODO: Re-visit fix. The second parameter was never actually used
 				this.goToFloor(this.getExactFloorOfYPos(this.worldY), true);
 			}
 		});
@@ -56,19 +93,20 @@ export default class Elevator extends Movable {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
+				// TODO: Re-visit fix. The second parameter was never actually used
 				this.goToFloor(this.getExactFloorOfYPos(this.worldY), true);
 			}
 		});
 	}
 
-	setFloorPosition(floor) {
+	setFloorPosition(floor: number) {
 		const destination = this.getYPosOfFloor(floor);
 		this.currentFloor = floor;
 		this.previousTruncFutureFloorIfStopped = floor;
 		this.moveTo(null, destination);
 	}
 
-	userEntering(user) {
+	userEntering(user: User) {
 		const randomOffset = _.random(this.userSlots.length - 1);
 		for (let i = 0; i < this.userSlots.length; i++) {
 			const slot = this.userSlots[(i + randomOffset) % this.userSlots.length];
@@ -80,7 +118,7 @@ export default class Elevator extends Movable {
 		return false;
 	}
 
-	pressFloorButton(floorNumber) {
+	pressFloorButton(floorNumber: number) {
 		floorNumber = limitNumber(floorNumber, 0, this.floorCount - 1);
 		const prev = this.buttonStates[floorNumber];
 		this.buttonStates[floorNumber] = true;
@@ -90,7 +128,7 @@ export default class Elevator extends Movable {
 		}
 	}
 
-	userExiting(user) {
+	userExiting(user: User) {
 		for (let i = 0; i < this.userSlots.length; i++) {
 			const slot = this.userSlots[i];
 			if (slot.user === user) {
@@ -99,7 +137,7 @@ export default class Elevator extends Movable {
 		}
 	}
 
-	updateElevatorMovement(dt) {
+	updateElevatorMovement(deltaTime: number) {
 		if (this.isBusy()) {
 			// TODO: Consider if having a nonzero velocity here should throw error..
 			return;
@@ -109,7 +147,7 @@ export default class Elevator extends Movable {
 		this.velocityY = limitNumber(this.velocityY, -this.MAXSPEED, this.MAXSPEED);
 
 		// Move elevator
-		this.moveTo(null, this.y + this.velocityY * dt);
+		this.moveTo(null, this.y + this.velocityY * deltaTime);
 
 		const destinationDiff = this.destinationY - this.y;
 		const directionSign = Math.sign(destinationDiff);
@@ -128,19 +166,19 @@ export default class Elevator extends Movable {
 						destinationDiff,
 					);
 					const deceleration = Math.min(this.DECELERATION * 1.1, Math.abs(requiredDeceleration));
-					this.velocityY -= directionSign * deceleration * dt;
+					this.velocityY -= directionSign * deceleration * deltaTime;
 				} else {
 					// Speed up (or keep max speed...)
 					acceleration = Math.min(Math.abs(destinationDiff * 5), this.ACCELERATION);
-					this.velocityY += directionSign * acceleration * dt;
+					this.velocityY += directionSign * acceleration * deltaTime;
 				}
 			} else if (velocitySign === 0) {
 				// Standing still - should accelerate
 				acceleration = Math.min(Math.abs(destinationDiff * 5), this.ACCELERATION);
-				this.velocityY += directionSign * acceleration * dt;
+				this.velocityY += directionSign * acceleration * deltaTime;
 			} else {
 				// Moving in wrong direction - decelerate as much as possible
-				this.velocityY -= velocitySign * this.DECELERATION * dt;
+				this.velocityY -= velocitySign * this.DECELERATION * deltaTime;
 				// Make sure we don't change direction within this time step - let standstill logic handle it
 				if (Math.sign(this.velocityY) !== velocitySign) {
 					this.velocityY = 0.0;
@@ -171,7 +209,7 @@ export default class Elevator extends Movable {
 		}
 	}
 
-	goToFloor(floor) {
+	goToFloor(floor: number) {
 		this.makeSureNotBusy();
 		this.isMoving = true;
 		this.destinationY = this.getYPosOfFloor(floor);
@@ -197,7 +235,7 @@ export default class Elevator extends Movable {
 		return arr;
 	}
 
-	isSuitableForTravelBetween(fromFloorNum, toFloorNum) {
+	isSuitableForTravelBetween(fromFloorNum: number, toFloorNum: number) {
 		if (fromFloorNum > toFloorNum) {
 			return this.goingDownIndicator;
 		}
@@ -207,11 +245,11 @@ export default class Elevator extends Movable {
 		return true;
 	}
 
-	getYPosOfFloor(floorNum) {
+	getYPosOfFloor(floorNum: number) {
 		return (this.floorCount - 1) * this.floorHeight - floorNum * this.floorHeight;
 	}
 
-	getExactFloorOfYPos(y) {
+	getExactFloorOfYPos(y: number) {
 		return ((this.floorCount - 1) * this.floorHeight - y) / this.floorHeight;
 	}
 
@@ -232,7 +270,7 @@ export default class Elevator extends Movable {
 		return this.getExactFloorOfYPos(this.y - Math.sign(this.velocityY) * distanceNeededToStop);
 	}
 
-	isApproachingFloor(floorNum) {
+	isApproachingFloor(floorNum: number) {
 		const floorYPos = this.getYPosOfFloor(floorNum);
 		const elevToFloor = floorYPos - this.y;
 		return this.velocityY !== 0.0 && Math.sign(this.velocityY) === Math.sign(elevToFloor);

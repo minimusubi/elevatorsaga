@@ -197,13 +197,7 @@ button .material-symbols-outlined + span {
 	padding-top: 10px;
 }
 
-.CodeMirror {
-	resize: vertical;
-	font:
-		14px Consolas,
-		Monaco,
-		monospace;
-	width: 1220px;
+#code {
 	margin: 10px auto;
 	height: 480px;
 }

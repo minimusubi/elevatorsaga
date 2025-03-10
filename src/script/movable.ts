@@ -2,58 +2,72 @@ import Emitter from './emitter.js';
 
 const EPSILON = 0.00001;
 
-const powInterpolate = function (value0, value1, x, a) {
+const powInterpolate = function (value0: number, value1: number, x: number, a: number) {
 	return value0 + ((value1 - value0) * Math.pow(x, a)) / (Math.pow(x, a) + Math.pow(1 - x, a));
 };
-const coolInterpolate = function (value0, value1, x) {
+const coolInterpolate = function (value0: number, value1: number, x: number) {
 	return powInterpolate(value0, value1, x, 1.3);
 };
 const DEFAULT_INTERPOLATOR = coolInterpolate;
 
-const _tmpPosStorage = [0, 0];
+const _tmpPosStorage: [number, number] = [0, 0];
 
-export default class Movable extends Emitter {
+type MovableEvents = {
+	new_state: [movable: Movable<MovableEvents>];
+	new_display_state: [movable: Movable<MovableEvents>];
+};
+
+// export default class Movable<TEvents extends Record<string, unknown[]>> extends Emitter<MovableEvents & TEvents> {
+export default class Movable<TEvents extends Record<string, unknown[]> = Record<string, never>> extends Emitter<
+	Omit<MovableEvents, keyof TEvents> & TEvents
+> {
+	x = 0.0;
+	y = 0.0;
+	parent: Movable | null = null;
+	worldX = 0.0;
+	worldY = 0.0;
+	currentTask: ((deltaTime: number) => void) | null = null;
+
 	constructor() {
 		super();
 
-		this.x = 0.0;
-		this.y = 0.0;
-		this.parent = null;
-		this.worldX = 0.0;
-		this.worldY = 0.0;
-		this.currentTask = null;
-
+		// @ts-expect-error Typing is hard
 		this.trigger('new_state', this);
 	}
 
-	static linearInterpolate(value0, value1, x) {
+	static linearInterpolate(value0: number, value1: number, x: number) {
 		return value0 + (value1 - value0) * x;
 	}
 
-	updateDisplayPosition(forceTrigger) {
+	updateDisplayPosition(forceTrigger?: boolean) {
 		this.getWorldPosition(_tmpPosStorage);
 		const oldX = this.worldX;
 		const oldY = this.worldY;
 		this.worldX = _tmpPosStorage[0];
 		this.worldY = _tmpPosStorage[1];
-		if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
+		if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger) {
+			// @ts-expect-error Typing is hard
 			this.trigger('new_display_state', this);
 		}
 	}
 
-	moveTo(newX, newY) {
+	moveTo(newX: number | null, newY: number | null) {
 		if (newX !== null) {
 			this.x = newX;
 		}
 		if (newY !== null) {
 			this.y = newY;
 		}
+
+		// @ts-expect-error Typing is hard
 		this.trigger('new_state', this);
 	}
 
-	moveToFast(newX, newY) {
+	moveToFast(newX: number, newY: number) {
 		this.x = newX;
 		this.y = newY;
+
+		// @ts-expect-error Typing is hard
 		this.trigger('new_state', this);
 	}
 
@@ -68,45 +82,48 @@ export default class Movable extends Emitter {
 		}
 	}
 
-	wait(millis, cb) {
+	wait(millis: number, callback?: () => void) {
 		this.makeSureNotBusy();
 		let timeSpent = 0.0;
 		const self = this;
-		self.currentTask = function waitTask(dt) {
-			timeSpent += dt;
+		self.currentTask = function waitTask(deltaTime) {
+			timeSpent += deltaTime;
 			if (timeSpent > millis) {
 				self.currentTask = null;
-				if (cb) {
-					cb();
+
+				if (callback) {
+					callback();
 				}
 			}
 		};
 	}
 
-	moveToOverTime(newX, newY, timeToSpend, interpolator, cb) {
+	moveToOverTime(
+		newX: number | null,
+		newY: number | null,
+		timeToSpend: number,
+		interpolator: typeof DEFAULT_INTERPOLATOR = DEFAULT_INTERPOLATOR,
+		callback?: () => void,
+	) {
 		this.makeSureNotBusy();
-		this.currentTask = true;
 		if (newX === null) {
 			newX = this.x;
 		}
 		if (newY === null) {
 			newY = this.y;
 		}
-		if (typeof interpolator === 'undefined') {
-			interpolator = DEFAULT_INTERPOLATOR;
-		}
 		const origX = this.x;
 		const origY = this.y;
 		let timeSpent = 0.0;
 		const self = this;
-		self.currentTask = function moveToOverTimeTask(dt) {
-			timeSpent = Math.min(timeToSpend, timeSpent + dt);
+		this.currentTask = function moveToOverTimeTask(deltaTime) {
+			timeSpent = Math.min(timeToSpend, timeSpent + deltaTime);
 			if (timeSpent === timeToSpend) {
 				// Epsilon issues possibly?
 				self.moveToFast(newX, newY);
 				self.currentTask = null;
-				if (cb) {
-					cb();
+				if (callback) {
+					callback();
 				}
 			} else {
 				const factor = timeSpent / timeToSpend;
@@ -115,13 +132,13 @@ export default class Movable extends Emitter {
 		};
 	}
 
-	update(dt) {
+	update(deltaTime: number) {
 		if (this.currentTask !== null) {
-			this.currentTask(dt);
+			this.currentTask(deltaTime);
 		}
 	}
 
-	getWorldPosition(storage) {
+	getWorldPosition(storage: [number, number]) {
 		let resultX = this.x;
 		let resultY = this.y;
 		let currentParent = this.parent;
@@ -134,8 +151,8 @@ export default class Movable extends Emitter {
 		storage[1] = resultY;
 	}
 
-	setParent(movableParent) {
-		const objWorld = [0, 0];
+	setParent(movableParent: Movable | null) {
+		const objWorld: [number, number] = [0, 0];
 		if (movableParent === null) {
 			if (this.parent !== null) {
 				this.getWorldPosition(objWorld);
@@ -145,7 +162,7 @@ export default class Movable extends Emitter {
 		} else {
 			// Parent is being set a non-null movable
 			this.getWorldPosition(objWorld);
-			const parentWorld = [0, 0];
+			const parentWorld: [number, number] = [0, 0];
 			movableParent.getWorldPosition(parentWorld);
 			this.parent = movableParent;
 			this.moveToFast(objWorld[0] - parentWorld[0], objWorld[1] - parentWorld[1]);

@@ -1,16 +1,34 @@
+import Elevator from './elevator.js';
 import Emitter from './emitter.js';
 
-export default class Floor extends Emitter {
-	constructor(floorLevel, yPosition, errorHandler) {
+type ButtonState = '' | 'activated';
+
+interface ButtonStates {
+	up: ButtonState;
+	down: ButtonState;
+}
+
+type FloorEvents = {
+	buttonstate_change: [states: ButtonStates];
+	up_button_pressed: [floor: Floor];
+	down_button_pressed: [floor: Floor];
+};
+
+export default class Floor extends Emitter<FloorEvents> {
+	level: number;
+	yPosition: number;
+	errorHandler: (error: any) => void;
+	buttonStates: ButtonStates = { up: '', down: '' };
+
+	constructor(floorLevel: number, yPosition: number, errorHandler: (error: any) => void) {
 		super();
 
 		this.level = floorLevel;
 		this.yPosition = yPosition;
 		this.errorHandler = errorHandler;
-		this.buttonStates = { up: '', down: '' };
 	}
 
-	tryTrigger(event, ...args) {
+	tryTrigger(event: keyof FloorEvents, ...args: FloorEvents[keyof FloorEvents]) {
 		try {
 			this.trigger(event, ...args);
 		} catch (e) {
@@ -36,7 +54,7 @@ export default class Floor extends Emitter {
 		}
 	}
 
-	elevatorAvailable(elevator) {
+	elevatorAvailable(elevator: Elevator) {
 		if (elevator.goingUpIndicator && this.buttonStates.up) {
 			this.buttonStates.up = '';
 			this.tryTrigger('buttonstate_change', this.buttonStates);

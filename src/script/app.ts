@@ -10,23 +10,23 @@ import {
 	presentStats,
 	presentWorld,
 } from './presenters.js';
+import { Editor } from './editor.js';
 import Emitter from './emitter.js';
 import { challenges } from './challenges.js';
 import config from './config.js';
-import { createEditor } from './editor.js';
 import { getTemplate } from './util.js';
 import { isUserError } from './base.js';
 
-let params = {};
+let params: Record<string, string> = {};
 
-export function createParamsUrl(overrides) {
+export function createParamsUrl(overrides: Record<string, string | number | null>) {
 	const merged = { ...params, ...overrides };
 
 	return (
 		'#' +
 		Object.entries(merged)
 			.filter(([, value]) => {
-				return value !== null && value !== undefined;
+				return value !== null;
 			})
 			.map(([key, value]) => {
 				return `${key}=${value}`;
@@ -35,17 +35,18 @@ export function createParamsUrl(overrides) {
 	);
 }
 
-class App extends Emitter {
+export class App extends Emitter {
+	editor: Editor;
 	worldController = new WorldController(1.0 / 60.0);
-	world = undefined;
+	world?: World = undefined;
 	currentChallengeIndex = 0;
 	highestChallengeIndex = 0;
 
 	element = {
-		innerWorld: document.querySelector('.innerworld'),
-		stats: document.querySelector('.statscontainer'),
-		feedback: document.querySelector('.feedbackcontainer'),
-		challenge: document.querySelector('.challenge'),
+		innerWorld: document.querySelector<HTMLElement>('.innerworld')!,
+		stats: document.querySelector<HTMLElement>('.statscontainer')!,
+		feedback: document.querySelector<HTMLElement>('.feedbackcontainer')!,
+		challenge: document.querySelector<HTMLElement>('.challenge')!,
 	};
 
 	template = {
@@ -57,7 +58,7 @@ class App extends Emitter {
 		feedback: getTemplate('feedback-template'),
 	};
 
-	constructor(editor) {
+	constructor(editor: Editor) {
 		super();
 
 		this.editor = editor;
@@ -69,14 +70,14 @@ class App extends Emitter {
 	}
 
 	startStopOrRestart() {
-		if (this.world.challengeEnded) {
-			this.startChallenge(this.currentChallengeIndex);
+		if (this.world?.challengeEnded ?? true) {
+			void this.startChallenge(this.currentChallengeIndex);
 		} else {
 			this.worldController.setPaused(!this.worldController.isPaused);
 		}
 	}
 
-	async startChallenge(challengeIndex, autoStart) {
+	async startChallenge(challengeIndex: number, autoStart = false) {
 		if (typeof this.world !== 'undefined') {
 			this.world.unWind();
 			// TODO: Investigate if memory leaks happen here
@@ -88,6 +89,7 @@ class App extends Emitter {
 		}
 
 		this.world = new World(challenges[challengeIndex].options);
+		// @ts-expect-error Setting a non-existant property on window
 		window.world = this.world;
 
 		clearAll([this.element.innerWorld, this.element.feedback]);
@@ -112,22 +114,22 @@ class App extends Emitter {
 		);
 
 		this.worldController.on('timescale_changed', () => {
-			localStorage.setItem(config.STORAGE_KEY_TIMESCALE, this.worldController.timeScale);
+			localStorage.setItem(config.STORAGE_KEY_TIMESCALE, this.worldController.timeScale.toString());
 			presentChallenge(
 				this.element.challenge,
 				challenges[challengeIndex],
 				challengeIndex + 1,
 				this,
-				this.world,
+				this.world!,
 				this.worldController,
 				this.template.challenge,
 			);
 		});
 
 		this.world.on('stats_changed', () => {
-			const challengeStatus = challenges[challengeIndex].condition.evaluate(this.world);
+			const challengeStatus = challenges[challengeIndex].condition.evaluate(this.world!);
 			if (challengeStatus !== null) {
-				this.world.challengeEnded = true;
+				this.world!.challengeEnded = true;
 				this.worldController.setPaused(true);
 				if (challengeStatus) {
 					this.highestChallengeIndex = Math.max(this.highestChallengeIndex, challengeIndex + 1);
@@ -135,7 +137,7 @@ class App extends Emitter {
 					presentFeedback(
 						this.element.feedback,
 						this.template.feedback,
-						this.world,
+						this.world!,
 						'Success!',
 						'Challenge completed',
 						createParamsUrl({ challenge: challengeIndex + 2 }),
@@ -144,7 +146,7 @@ class App extends Emitter {
 					presentFeedback(
 						this.element.feedback,
 						this.template.feedback,
-						this.world,
+						this.world!,
 						'Challenge failed',
 						'Maybe your program needs an improvement?',
 						'',
@@ -153,28 +155,33 @@ class App extends Emitter {
 			}
 		});
 
-		const codeObj = await this.editor.getCodeObj();
-		console.log('Starting...');
-		this.worldController.start(this.world, codeObj, window.requestAnimationFrame, autoStart);
+		const userModule = await this.editor.getUserModule();
+
+		if (userModule) {
+			console.log('Starting...');
+			this.worldController.start(this.world, userModule, window.requestAnimationFrame, autoStart);
+		}
 	}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-	const editor = createEditor();
-	const codestatus = document.querySelector('.codestatus');
+// The async callback returns a promise , but typings expect void
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+document.addEventListener('DOMContentLoaded', async () => {
+	const editor = await Editor.create();
+	const codestatus = document.querySelector<HTMLElement>('.codestatus')!;
 	const codeStatusTempl = getTemplate('codestatus-template');
 
 	const app = new App(editor);
 
 	// Handle uncaught promise rejections in user code
 	window.addEventListener('unhandledrejection', (event) => {
-		if (isUserError(event.reason)) {
+		if (isUserError(event.reason as Error)) {
 			app.worldController.setPaused(true);
-			presentCodeStatus(codestatus, codeStatusTempl, event.reason);
+			presentCodeStatus(codestatus, codeStatusTempl, event.reason as Error);
 		}
 	});
-	editor.on('apply_code', () => {
-		app.startChallenge(app.currentChallengeIndex, true);
+	editor.on('apply_code', async () => {
+		await app.startChallenge(app.currentChallengeIndex, true);
 	});
 	editor.on('code_success', () => {
 		presentCodeStatus(codestatus, codeStatusTempl);
@@ -183,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		presentCodeStatus(codestatus, codeStatusTempl, error);
 	});
 	editor.on('change', () => {
-		document.querySelector('#fitness_message').classList.add('faded');
-		// const codeStr = editor.getCode();
+		document.querySelector('#fitness_message')!.classList.add('faded');
+		// const codeStr = editor.getContent();
 		// fitnessSuite(codeStr, true, function (results) {
 		// 	var message = '';
 		// 	if (!results.error) {
@@ -204,20 +211,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	riot.route((path) => {
 		const hash = path.match(/#(.+)/)?.[1] ?? '';
-		params = _.reduce(
-			hash.split(','),
-			(result, p) => {
-				const match = p.match(/(\w+)=(\w+$)/);
-				if (match) {
-					result[match[1]] = match[2];
-				}
-				return result;
-			},
-			{},
-		);
+		params = hash.split(',').reduce<Record<string, string>>((result, param) => {
+			const match = param.match(/(\w+)=(\w+$)/);
+			if (match) {
+				result[match[1]] = match[2];
+			}
+			return result;
+		}, {});
 		let requestedChallenge = 0;
 		let autoStart = false;
-		let timeScale = parseFloat(localStorage.getItem(config.STORAGE_KEY_TIMESCALE)) || 2.0;
+		let timeScale = parseFloat(localStorage.getItem(config.STORAGE_KEY_TIMESCALE) ?? '2.0');
 		_.each(params, (val, key) => {
 			if (key === 'challenge') {
 				requestedChallenge = _.parseInt(val) - 1;
@@ -237,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 		app.worldController.setTimeScale(timeScale);
-		app.startChallenge(requestedChallenge, autoStart);
+		void app.startChallenge(requestedChallenge, autoStart);
 	});
 
 	// Trigger route function above

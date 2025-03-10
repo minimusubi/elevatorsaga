@@ -18,16 +18,10 @@
 					'opsz' 24;
 			}
 		</style>
-		<link rel="stylesheet" href="libs/codemirror/codemirror.css" />
-		<link rel="stylesheet" href="libs/codemirror/themes/solarized.css" />
 		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
 
 		<script src="libs/lodash.min.js"></script>
 		<script src="libs/riot.js"></script>
-
-		<script src="libs/codemirror/codemirror.js"></script>
-		<script src="libs/codemirror/addon/edit/closebrackets.js"></script>
-		<script src="libs/codemirror/mode/javascript/javascript.js"></script>
 
 		<script type="module" src="script/app.js"></script>
 
@@ -194,9 +188,7 @@
 			</div>
 
 			<div class="codestatus"></div>
-			<div class="code">
-				<textarea name="Code" id="code"></textarea>
-			</div>
+			<div id="code"></div>
 			<button id="button_reset" style="float: left">
 				<span class="material-symbols-outlined">refresh</span>
 				<span>Reset</span>
@@ -225,7 +217,7 @@
 				<h3>Confused? Open the <a href="documentation.html">Help and API documentation</a> page</h3>
 			</div>
 			<div class="footer">
-				<h4>Original by Magnus Wolffelt and contributors. This version forked by minimusubi.</h4>
+				<h4>Original by Magnus Wolffelt and contributors. Forked by minimusubi.</h4>
 				<h4>Version <span class="emphasis-color">1.6.5</span></h4>
 				<h4><a href="https://github.com/minimusubi/elevatorsaga">Source code</a> on GitHub</h4>
 				<h4><a href="test/index.html">Run tests</a></h4>

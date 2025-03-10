@@ -1,4 +1,6 @@
-import { createFrameRequester, getModuleFromUserCode } from '../script/base.js';
+/* eslint-disable @typescript-eslint/unbound-method */
+import { FrameRequester, UserModule, createFrameRequester, getModuleFromUserCode } from '../script/base.js';
+import { World, WorldController } from '../script/world.js';
 import {
 	requireUserCountWithMaxWaitTime,
 	requireUserCountWithinMoves,
@@ -11,19 +13,19 @@ import Emitter from '../script/emitter.js';
 import Movable from '../script/movable.js';
 import User from '../script/user.js';
 
-import { WorldController } from '../script/world.js';
-
-const timeForwarder = function (dt, stepSize, fn) {
+const timeForwarder = function (deltaTime: number, stepSize: number, fn: (time: number) => void) {
 	let accumulated = 0.0;
-	while (accumulated < dt) {
+	while (accumulated < deltaTime) {
 		accumulated += stepSize;
 		fn(stepSize);
 	}
 };
 
 describe('Elevator Saga', () => {
-	let handlers = null;
+	// @ts-expect-error Guaranteed to be non-null during the tests
+	let handlers: { someHandler: jasmine.Spy; someOtherHandler: jasmine.Spy } = null;
 	beforeEach(() => {
+		// @ts-expect-error calls gets added by jasmine
 		handlers = { someHandler: function () {}, someOtherHandler: function () {} };
 		for (const [key, value] of Object.entries(handlers)) {
 			spyOn(handlers, key).and.callThrough();
@@ -31,13 +33,15 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('Movable class', () => {
-		let m = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let m: Movable = null;
 
 		beforeEach(() => {
 			m = new Movable();
 		});
 		it('disallows incorrect creation', () => {
 			const faultyCreation = function () {
+				// @ts-expect-error This test expects failure
 				Movable();
 			};
 			expect(faultyCreation).toThrow();
@@ -51,10 +55,11 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('User class', () => {
-		let u = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let u: User = null;
 
 		beforeEach(() => {
-			u = new User();
+			u = new User(60, 'child');
 		});
 		it('updates display position when told to', () => {
 			u.moveTo(1.0, 1.0);
@@ -65,7 +70,8 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('Movable object', () => {
-		let m = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let m: Movable = null;
 
 		beforeEach(() => {
 			m = new Movable();
@@ -120,15 +126,19 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('World controller', () => {
-		let controller = null;
-		let fakeWorld = null;
-		let fakeCodeObj = null;
-		let frameRequester = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let controller: WorldController = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let fakeWorld: World = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let fakeCodeObj: UserModule = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let frameRequester: FrameRequester = null;
 		const DT_MAX = 1000.0 / 59;
 		beforeEach(() => {
 			controller = new WorldController(DT_MAX);
-			fakeWorld = new Emitter();
-			fakeWorld.update = function (dt) {};
+			fakeWorld = new Emitter() as World;
+			fakeWorld.update = function (dt: number) {};
 			fakeWorld.init = function () {};
 			fakeWorld.updateDisplayPositions = function () {};
 			fakeWorld.trigger = function () {};
@@ -164,9 +174,10 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('Challenge requirements', () => {
-		let fakeWorld = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let fakeWorld: World = null;
 		beforeEach(() => {
-			fakeWorld = { elapsedTime: 0.0, transportedCounter: 0, maxWaitTime: 0.0, moveCount: 0 };
+			fakeWorld = { elapsedTime: 0.0, transportedCounter: 0, maxWaitTime: 0.0, moveCount: 0 } as World;
 		});
 
 		describe('requireUserCountWithinTime', () => {
@@ -222,7 +233,8 @@ describe('Elevator Saga', () => {
 	});
 
 	describe('Elevator object', () => {
-		let e = null;
+		// @ts-expect-error Guaranteed to be non-null during the tests
+		let e: Elevator = null;
 		const floorCount = 4;
 		const floorHeight = 44;
 
@@ -399,12 +411,14 @@ describe('Elevator Saga', () => {
 
 	describe('API', () => {
 		describe('Elevator interface', () => {
-			let e = null;
-			let elevInterface = null;
+			// @ts-expect-error Guaranteed to be non-null during the tests
+			let e: Elevator = null;
+			// @ts-expect-error Guaranteed to be non-null during the tests
+			let elevInterface: ElevatorInterface = null;
 			beforeEach(() => {
 				e = new Elevator(1.5, 4, 40);
 				e.setFloorPosition(0);
-				elevInterface = new ElevatorInterface(e, 4);
+				elevInterface = new ElevatorInterface(e, 4, () => {});
 			});
 
 			describe('events', () => {
@@ -505,7 +519,7 @@ describe('Elevator Saga', () => {
 				const fnNewUser = function () {
 						return { weight: _.random(55, 100) };
 					},
-					fnEnterElevator = function (user) {
+					fnEnterElevator = function (user: User) {
 						e.userEntering(user);
 					};
 

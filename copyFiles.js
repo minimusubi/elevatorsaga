@@ -6,7 +6,7 @@ import { stat } from 'fs/promises';
 const SOURCE = './src';
 const DESTINATION = './dist';
 
-const files = await glob(`${SOURCE}/**/*`, { ignore: `${SOURCE}/**/*.ts` });
+const files = await glob(`${SOURCE}/**/*`, { ignore: [`**/*.ts`] });
 
 for (const file of files) {
 	const stats = await stat(file);

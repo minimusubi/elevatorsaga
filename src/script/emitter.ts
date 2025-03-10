@@ -1,71 +1,107 @@
-export default class Emitter {
+export type EventCallback<TEvents extends Record<string, unknown[]>, TEventName extends string> = (
+	eventName: TEventName,
+	...args: TEvents[TEventName]
+) => void | Promise<void>;
+
+interface NativeEventListener {
+	(evt: CustomEvent): void;
+}
+
+export default class Emitter<TEvents extends Record<string, unknown[]> = Record<string, never>> {
 	#eventTarget = new EventTarget();
-	listeners = new Map();
+	// Use a mapped type so each event key gets its own Map with the right callback type
+	listeners: { [K in Extract<keyof TEvents, string>]?: Map<EventCallback<TEvents, K>, NativeEventListener> } = {};
 
-	#attachListener(events, originalCallback, wrappedCallback) {
-		for (const event of events.split(/\s+/)) {
-			if (!this.listeners.has(event)) {
-				this.listeners.set(event, new Map());
-			}
-
-			const callbackMap = this.listeners.get(event);
-			if (callbackMap.has(originalCallback)) {
-				return;
-			}
-
-			callbackMap.set(originalCallback, wrappedCallback);
-			this.#eventTarget.addEventListener(event, wrappedCallback);
+	#attachListener<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		originalCallback: EventCallback<TEvents, TEventName>,
+		wrappedCallback: NativeEventListener,
+	) {
+		if (!this.listeners[eventName]) {
+			this.listeners[eventName] = new Map<EventCallback<TEvents, TEventName>, NativeEventListener>();
 		}
+
+		const callbackMap = this.listeners[eventName]!;
+		if (callbackMap.has(originalCallback)) {
+			return;
+		}
+
+		callbackMap.set(originalCallback, wrappedCallback);
+		this.#eventTarget.addEventListener(eventName, wrappedCallback as EventListener);
 	}
 
-	#on(events, originalCallback, preWrappedCallback = null) {
+	#on<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		originalCallback: EventCallback<TEvents, TEventName>,
+		preWrappedCallback: EventCallback<TEvents, TEventName> | null = null,
+	) {
 		const callable = preWrappedCallback ?? originalCallback;
-		let wrappedCallback = (event) => {
-			callable(event.type, ...event.detail);
+		const wrappedCallback = (event: CustomEvent<TEvents[TEventName]>) => {
+			void callable(event.type as TEventName, ...event.detail);
 		};
 
-		this.#attachListener(events, originalCallback, wrappedCallback);
+		this.#attachListener(eventName, originalCallback, wrappedCallback);
 	}
 
-	on(events, callback) {
-		this.#on(events, callback);
+	on<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<TEvents, TEventName>,
+	) {
+		this.#on(eventName, callback);
 	}
 
-	off(events, callback) {
-		if (events === '*') {
-			events = Array.from(this.listeners.keys()).join(' ');
-		}
-
-		for (const event of events.split(/\s+/)) {
-			const callbackMap = this.listeners.get(event);
+	#detachListener<TEventName extends Extract<keyof TEvents, string>>(
+		eventNames: TEventName[],
+		callback?: EventCallback<TEvents, TEventName>,
+	) {
+		for (const event of eventNames) {
+			const callbackMap = this.listeners[event];
 
 			if (callbackMap) {
 				if (callback) {
 					if (callbackMap.has(callback)) {
-						this.#eventTarget.removeEventListener(event, callbackMap.get(callback));
+						this.#eventTarget.removeEventListener(event, callbackMap.get(callback)! as EventListener);
 						callbackMap.delete(callback);
 					}
 				} else {
 					for (const [, wrappedCallback] of callbackMap) {
-						this.#eventTarget.removeEventListener(event, wrappedCallback);
+						this.#eventTarget.removeEventListener(event, wrappedCallback as EventListener);
 					}
 
-					this.listeners.delete(event);
+					this.listeners[event] = undefined;
 				}
 			}
 		}
 	}
 
-	once(events, callback) {
-		const wrappedCallback = (...args) => {
-			callback(...args);
-			this.off(events, callback);
-		};
+	off<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName | '*',
+		callback?: EventCallback<TEvents, TEventName>,
+	) {
+		let events;
 
-		this.#on(events, callback, wrappedCallback);
+		if (eventName === '*') {
+			events = Object.keys(this.listeners) as TEventName[];
+		} else {
+			events = [eventName];
+		}
+
+		this.#detachListener(events, callback);
 	}
 
-	trigger(event, ...args) {
-		this.#eventTarget.dispatchEvent(new CustomEvent(event, { detail: args }));
+	once<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<TEvents, TEventName>,
+	) {
+		const wrappedCallback: EventCallback<TEvents, TEventName> = (...args) => {
+			void callback(...args);
+			this.off(eventName, callback);
+		};
+
+		this.#on(eventName, callback, wrappedCallback);
+	}
+
+	trigger<TEventName extends Extract<keyof TEvents, string>>(eventName: TEventName, ...args: TEvents[TEventName]) {
+		this.#eventTarget.dispatchEvent(new CustomEvent(eventName, { detail: args }));
 	}
 }

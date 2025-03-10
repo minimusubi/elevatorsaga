@@ -1,17 +1,34 @@
+import Elevator, { ElevatorEvents } from './elevator.js';
+import { EventCallback } from './emitter.js';
+import Floor from './floor.js';
 import Movable from './movable.js';
 
-export default class User extends Movable {
-	constructor(weight) {
+type UserEvents = {
+	entered_elevator: [elevator: Elevator];
+	exited_elevator: [elevator: Elevator];
+	removed: [];
+	new_state: [];
+	new_display_state: [];
+};
+
+export default class User extends Movable<UserEvents> {
+	weight: number;
+	displayType: string;
+	currentFloor = 0;
+	destinationFloor = 0;
+	done = false;
+	removeMe = false;
+	exitAvailableHandler?: EventCallback<ElevatorEvents, 'exit_available'>;
+	spawnTimestamp?: number;
+
+	constructor(weight: number, displayType: string) {
 		super();
 
 		this.weight = weight;
-		this.currentFloor = 0;
-		this.destinationFloor = 0;
-		this.done = false;
-		this.removeMe = false;
+		this.displayType = displayType;
 	}
 
-	appearOnFloor(floor, destinationFloorNum) {
+	appearOnFloor(floor: Floor, destinationFloorNum: number) {
 		const floorPosY = floor.getSpawnPosY();
 		this.currentFloor = floor.level;
 		this.destinationFloor = destinationFloorNum;
@@ -19,7 +36,7 @@ export default class User extends Movable {
 		this.pressFloorButton(floor);
 	}
 
-	pressFloorButton(floor) {
+	pressFloorButton(floor: Floor) {
 		if (this.destinationFloor < this.currentFloor) {
 			floor.pressDownButton();
 		} else {
@@ -27,7 +44,7 @@ export default class User extends Movable {
 		}
 	}
 
-	handleExit(floorNum, elevator) {
+	handleExit(floorNum: number, elevator: Elevator) {
 		if (elevator.currentFloor === this.destinationFloor) {
 			elevator.userExiting(this);
 			this.currentFloor = elevator.currentFloor;
@@ -37,18 +54,17 @@ export default class User extends Movable {
 			this.trigger('exited_elevator', elevator);
 			this.trigger('new_state');
 			this.trigger('new_display_state');
-			const self = this;
 			this.moveToOverTime(destination, null, 1 + Math.random() * 0.5, Movable.linearInterpolate, () => {
-				self.removeMe = true;
-				self.trigger('removed');
-				self.off('*');
+				this.removeMe = true;
+				this.trigger('removed');
+				this.off('*');
 			});
 
 			elevator.off('exit_available', this.exitAvailableHandler);
 		}
 	}
 
-	elevatorAvailable(elevator, floor) {
+	elevatorAvailable(elevator: Elevator, floor: Floor) {
 		if (this.done || this.parent !== null || this.isBusy()) {
 			return;
 		}
@@ -67,7 +83,7 @@ export default class User extends Movable {
 			this.moveToOverTime(pos[0], pos[1], 1, undefined, () => {
 				elevator.pressFloorButton(self.destinationFloor);
 			});
-			this.exitAvailableHandler = function (eventName, floorNum, elevator) {
+			this.exitAvailableHandler = function (eventName, floorNum: number, elevator: Elevator) {
 				self.handleExit(elevator.currentFloor, elevator);
 			};
 			elevator.on('exit_available', this.exitAvailableHandler);
