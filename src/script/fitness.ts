@@ -67,10 +67,10 @@ function makeAverageResult(results) {
 	return { options: results[0].options, result: averagedResult };
 }
 
-function doFitnessSuite(codeStr: string, runCount: number) {
+export async function doFitnessSuite(codeStr: string, runCount: number) {
 	let userModule;
 	try {
-		userModule = getModuleFromUserCode(codeStr);
+		userModule = await getModuleFromUserCode(codeStr);
 	} catch (e) {
 		return { error: `${e}` };
 	}
@@ -104,7 +104,8 @@ function doFitnessSuite(codeStr: string, runCount: number) {
 	return averagedResults;
 }
 
-function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results: any) => void) {
+async function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results: any) => void) {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Web worker browser check
 	if (!!Worker && preferWorker) {
 		// Web workers are available, neat.
 		try {
@@ -112,7 +113,7 @@ function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results
 			w.postMessage(codeStr);
 			w.onmessage = function (msg) {
 				console.log('Got message from fitness worker', msg);
-				const results = msg.data;
+				const results = msg.data as PromiseFulfilledResult<ReturnType<typeof doFitnessSuite>>;
 				callback(results);
 			};
 			return;
@@ -121,6 +122,6 @@ function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results
 		}
 	}
 	// Fall back do synch calculation without web worker
-	const results = doFitnessSuite(codeStr, 2);
+	const results = await doFitnessSuite(codeStr, 2);
 	callback(results);
 }

@@ -1,3 +1,5 @@
+import { doFitnessSuite } from '../fitness.js';
+
 // TODO: use js modules? will not work with ES6+ refactor
 importScripts('libs/lodash.min.js', 'libs/riot.js');
 importScripts(
@@ -11,10 +13,10 @@ importScripts(
 	'script/fitness.js',
 );
 
-onmessage = function (msg) {
+onmessage = async function (msg) {
 	// Assume it is a code object that should be fitness-tested
-	const codeStr = msg.data;
-	const results = doFitnessSuite(codeStr, 6);
+	const codeStr = msg.data as string;
+	const results = await doFitnessSuite(codeStr, 6);
 	console.log('Posting message back', results);
 	postMessage(results);
 };

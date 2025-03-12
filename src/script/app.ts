@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	editor.on('change', () => {
 		document.querySelector('#fitness_message')!.classList.add('faded');
 		// const codeStr = editor.getContent();
-		// fitnessSuite(codeStr, true, function (results) {
+		// void fitnessSuite(codeStr, true, function (results) {
 		// 	var message = '';
 		// 	if (!results.error) {
 		// 		message =
