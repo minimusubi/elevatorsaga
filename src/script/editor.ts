@@ -41,17 +41,30 @@ type EditorEvents = { apply_code: []; code_success: []; usercode_error: [error: 
 
 export class Editor extends Emitter<EditorEvents> {
 	editor: monaco.editor.IStandaloneCodeEditor;
+	autoFormat = true;
 
 	static async create() {
 		// @ts-expect-error Something is wrong with my typings
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		const monaco = (await loader.init()) as loader.Monaco;
-		const editor = monaco.editor.create(document.getElementById('code')!, {
+		const monacoEditor = monaco.editor.create(document.getElementById('code')!, {
 			language: 'javascript',
 			insertSpaces: false,
+			scrollBeyondLastLine: false,
+		});
+		const editor = new Editor(monacoEditor);
+
+		// Add Ctrl/Cmd + S save
+		monacoEditor.addAction({
+			id: 'save-code',
+			label: 'Save Code',
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+			run: () => {
+				void editor.save();
+			},
 		});
 
-		return new Editor(editor);
+		return editor;
 	}
 
 	/**
@@ -62,18 +75,15 @@ export class Editor extends Emitter<EditorEvents> {
 
 		this.editor = editor;
 
-		const saveCode = () => {
-			localStorage.setItem(config.STORAGE_KEY_USERCODE, this.getContent());
-			document.querySelector('#save_message')!.textContent = `Code saved ${new Date().toLocaleTimeString()}`;
-			this.trigger('change');
-		};
 		const reset = () => {
 			this.setContent(getCodeTemplate('default-elev-implementation'));
 		};
 
-		const autoSaver = _.debounce(saveCode, 1000);
+		const autoSave = _.debounce(() => {
+			void this.save(true);
+		}, 1000);
 		this.editor.onDidChangeModelContent(() => {
-			autoSaver();
+			autoSave();
 		});
 
 		const existingCode = localStorage.getItem(config.STORAGE_KEY_USERCODE);
@@ -83,8 +93,18 @@ export class Editor extends Emitter<EditorEvents> {
 			reset();
 		}
 
-		document.querySelector('#button_save')!.addEventListener('click', () => {
-			saveCode();
+		const saveButton = document.querySelector('#button_save')!;
+		const metaSpan = saveButton.querySelector<HTMLSpanElement>('[data-meta]')!;
+		metaSpan.innerText = metaSpan.innerText.replace(
+			'Meta',
+			// There isn't really a good way to do this other than to use navigator.platform
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
+			navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone' ? '⌘' : 'Ctrl',
+		);
+		// The async callback returns a promise , but typings expect void
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		saveButton.addEventListener('click', async () => {
+			await this.save();
 			this.editor.focus();
 		});
 
@@ -105,15 +125,42 @@ export class Editor extends Emitter<EditorEvents> {
 
 		// The async callback returns a promise , but typings expect void
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		document.querySelector('#button_format')!.addEventListener('click', async () => {
-			const content = await format(this.getContent());
-			this.setContent(content || '');
-			this.editor.focus();
+		document.querySelector('#button_format')!.addEventListener('click', this.format.bind(this));
+
+		this.autoFormat = !!JSON.parse(localStorage.getItem(config.STORAGE_KEY_FORMAT_ON_SAVE) ?? 'true');
+
+		const formatOnSaveInput = document.querySelector<HTMLInputElement>('#format_on_save')!;
+		formatOnSaveInput.checked = this.autoFormat;
+		formatOnSaveInput.addEventListener('change', (event: Event) => {
+			this.autoFormat = (event.target as HTMLInputElement).checked;
+			localStorage.setItem(config.STORAGE_KEY_FORMAT_ON_SAVE, JSON.stringify(this.autoFormat));
 		});
 
 		document.querySelector('#button_apply')!.addEventListener('click', () => {
 			this.trigger('apply_code');
 		});
+	}
+
+	async format() {
+		const selection = this.editor.getSelection();
+		const content = await format(this.getContent());
+		this.setContent(content);
+		this.editor.focus();
+
+		// Restore selection after focus
+		if (selection) {
+			this.editor.setSelection(selection);
+		}
+	}
+
+	async save(isAutoSave: boolean = false) {
+		if (!isAutoSave && this.autoFormat) {
+			await this.format();
+		}
+
+		localStorage.setItem(config.STORAGE_KEY_USERCODE, this.getContent());
+		document.querySelector('#save_message')!.textContent = `Code saved ${new Date().toLocaleTimeString()}`;
+		this.trigger('change');
 	}
 
 	async getUserModule() {

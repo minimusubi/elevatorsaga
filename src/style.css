@@ -135,6 +135,16 @@ button .material-symbols-outlined + span {
 	opacity: 0.4;
 }
 
+#format_label {
+	line-height: 30px;
+}
+
+#format_on_save {
+	margin-top: 8px;
+	width: 1rem;
+	height: 1rem;
+}
+
 #save_message,
 #fitness_message {
 	line-height: 30px;
