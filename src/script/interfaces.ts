@@ -1,6 +1,7 @@
-import { epsilonEquals, limitNumber } from './base.js';
+import Emitter, { EventCallback } from './emitter.js';
+import { deprecationWarning, epsilonEquals, limitNumber } from './base.js';
 import Elevator from './elevator.js';
-import Emitter from './emitter.js';
+import Floor from './floor.js';
 
 // Interface that hides actual elevator object behind a more robust facade,
 // while also exposing relevant events, and providing some helper queue
@@ -8,12 +9,17 @@ import Emitter from './emitter.js';
 
 type ElevatorInterfaceEvents = {
 	idle: [];
+	willPassFloor: ElevatorInterfaceEvents['passing_floor'];
+	arrive: ElevatorInterfaceEvents['stopped_at_floor'];
+	call: ElevatorInterfaceEvents['floor_button_pressed'];
+
+	// Deprecated
 	passing_floor: [floor: number, direction: 'up' | 'down'];
 	stopped_at_floor: [floor: number];
 	floor_button_pressed: [floor: number];
 };
 
-export default class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
+export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 	#elevator: Elevator;
 	#floorCount: number;
 	#errorHandler: (error: any) => void;
@@ -43,13 +49,16 @@ export default class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> 
 
 		elevator.on('passing_floor', (eventName, floorNum, direction) => {
 			this.#tryTrigger('passing_floor', floorNum, direction);
+			this.#tryTrigger('willPassFloor', floorNum, direction);
 		});
 
 		elevator.on('stopped_at_floor', (eventName, floorNum) => {
 			this.#tryTrigger('stopped_at_floor', floorNum);
+			this.#tryTrigger('arrive', floorNum);
 		});
 		elevator.on('floor_button_pressed', (eventName, floorNum) => {
 			this.#tryTrigger('floor_button_pressed', floorNum);
+			this.#tryTrigger('call', floorNum);
 		});
 	}
 
@@ -92,10 +101,20 @@ export default class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> 
 		}
 	}
 
+	/**
+	 * @deprecated Undocumented and deprecated, will be removed
+	 */
 	getFirstPressedFloor() {
 		return this.#elevator.getFirstPressedFloor();
-	} // Undocumented and deprecated, will be removed
+	}
+	/**
+	 * @deprecated Use calls instead.
+	 */
 	getPressedFloors() {
+		deprecationWarning('getPressedFloors()', 'calls');
+		return this.#elevator.getPressedFloors();
+	}
+	get calls() {
 		return this.#elevator.getPressedFloors();
 	}
 	currentFloor() {
@@ -136,5 +155,105 @@ export default class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> 
 		} else {
 			return this.#elevator.goingDownIndicator;
 		}
+	}
+
+	#warnDeprecatedEvent(event: Extract<keyof ElevatorInterfaceEvents, string>) {
+		if (event === 'passing_floor') {
+			deprecationWarning(event, 'willPassFloor');
+		} else if (event === 'stopped_at_floor') {
+			deprecationWarning(event, 'arrive');
+		} else if (event === 'floor_button_pressed') {
+			deprecationWarning(event, 'call');
+		}
+	}
+
+	on<TEventName extends Extract<keyof ElevatorInterfaceEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<ElevatorInterfaceEvents, TEventName>,
+	) {
+		this.#warnDeprecatedEvent(eventName);
+		super.on(eventName, callback);
+	}
+
+	once<TEventName extends Extract<keyof ElevatorInterfaceEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<ElevatorInterfaceEvents, TEventName>,
+	) {
+		this.#warnDeprecatedEvent(eventName);
+		super.once(eventName, callback);
+	}
+}
+
+type FloorInterfaceEvents = {
+	call: [direction: 'up' | 'down', floor: FloorInterface];
+
+	// Deprecated
+	up_button_pressed: [floor: Floor];
+	down_button_pressed: [floor: Floor];
+};
+
+// TODO: Write tests
+export class FloorInterface extends Emitter<FloorInterfaceEvents> {
+	#floor: Floor;
+	#errorHandler: (error: any) => void;
+
+	constructor(floor: Floor, errorHandler: (error: any) => void) {
+		super();
+
+		this.#floor = floor;
+		this.#errorHandler = errorHandler;
+
+		floor.on('up_button_pressed', (eventName, ...args) => {
+			this.#tryTrigger('up_button_pressed', ...args);
+			this.#tryTrigger('call', 'up', this);
+		});
+		floor.on('down_button_pressed', (eventName, ...args) => {
+			this.#tryTrigger('down_button_pressed', ...args);
+			this.#tryTrigger('call', 'down', this);
+		});
+	}
+
+	#tryTrigger(event: keyof FloorInterfaceEvents, ...args: FloorInterfaceEvents[keyof FloorInterfaceEvents]) {
+		try {
+			this.trigger(event, ...args);
+		} catch (e) {
+			this.#errorHandler(e);
+		}
+	}
+
+	/**
+	 * @deprecated Use number instead.
+	 */
+	floorNum() {
+		deprecationWarning('floorNum()', 'number');
+		return this.#floor.floorNum();
+	}
+
+	get number() {
+		return this.#floor.level;
+	}
+
+	#warnDeprecatedEvent(event: Extract<keyof FloorInterfaceEvents, string>) {
+		if (event === 'up_button_pressed') {
+			deprecationWarning(event, 'call');
+		} else if (event === 'down_button_pressed') {
+			deprecationWarning(event, 'call');
+		}
+	}
+
+	on<TEventName extends Extract<keyof FloorInterfaceEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<FloorInterfaceEvents, TEventName>,
+	) {
+		this.#warnDeprecatedEvent(eventName);
+		super.on(eventName, callback);
+	}
+
+	once<TEventName extends Extract<keyof FloorInterfaceEvents, string>>(
+		eventName: TEventName,
+		callback: EventCallback<FloorInterfaceEvents, TEventName>,
+	) {
+		this.#warnDeprecatedEvent(eventName);
+		super.once(eventName, callback);
 	}
 }

@@ -108,22 +108,26 @@ export function update(deltaTime, elevators, floors) {
 						elevator is doing nothing. In this example we tell it to move to floor 0.
 					</dd>
 					<dt>
-						<pre><code>elevator.on("floor_button_pressed", (eventName, floorNum) => {
-    // Do something
+						<pre><code>elevator.on("call", (eventName, floorNum) => {
+    // Someone pushed a floor button in the elevator
 });</code></pre>
 					</dt>
 					<dd>
-						Listen for the "floor_button_pressed" event, issued when a passenger pressed a button inside the
-						elevator. This indicates that the passenger wants to go to that floor.
+						Listen for the "call" event, issued when a passenger presses a button inside the elevator. This
+						indicates that the passenger wants to go to that floor.
 					</dd>
 					<dt>
-						<pre><code>floor.on("up_button_pressed", (eventName) => {
-    // Do something
+						<pre><code>floor.on("call", (eventName, direction) => {
+    if (direction === 'up') {
+        // Someone pressed the up button
+    } else {
+        // Someone pressed the down button
+    }
 });</code></pre>
 					</dt>
 					<dd>
-						Listen for the "up_button_pressed" event, issued when a passenger pressed the up button on the
-						floor they are waiting on. This indicates that the passenger wants to go to another floor.
+						Listen for the "call" event, issued when a passenger pressed the up button on the floor they are
+						waiting on. This indicates that the passenger wants to go to another floor.
 					</dd>
 				</dl>
 
@@ -276,9 +280,24 @@ elevator.checkDestinationQueue();</code></pre>
 							</td>
 						</tr>
 						<tr>
-							<td>getPressedFloors</td>
+							<td>calls</td>
+							<td>array</td>
+							<td><small>Read-only. Gets the currently pressed floor numbers as an array.</small></td>
+							<td>
+								<pre><code>if (elevator.calls.length > 0) {
+    // Maybe go to some chosen floor first?
+}</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td><s>getPressedFloors</s></td>
 							<td>function</td>
-							<td><small>Gets the currently pressed floor numbers as an array.</small></td>
+							<td>
+								<small
+									>Deprecated. Use calls instead. Gets the currently pressed floor numbers as an
+									array.</small
+								>
+							</td>
 							<td>
 								<pre><code>if (elevator.getPressedFloors().length > 0) {
     // Maybe go to some chosen floor first?
@@ -309,8 +328,46 @@ elevator.checkDestinationQueue();</code></pre>
 							</td>
 						</tr>
 						<tr>
-							<td>floor_button_pressed</td>
+							<td>call</td>
 							<td><small>Triggered when a passenger has pressed a button inside the elevator.</small></td>
+							<td>
+								<pre><code>elevator.on("call", (eventName, floorNum) => {
+    // Maybe tell the elevator to go to that floor?
+});</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td>willPassFloor</td>
+							<td>
+								<small
+									>Triggered slightly before the elevator will pass a floor. A good time to decide
+									whether to stop at that floor. Note that this event is not triggered for the
+									destination floor. Direction is either "up" or "down".</small
+								>
+							</td>
+							<td>
+								<pre><code>elevator.on("willPassFloor", (eventName, floorNum, direction) => {
+    // Do something
+});</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td>arrive</td>
+							<td><small>Triggered when the elevator has arrived at a floor.</small></td>
+							<td>
+								<pre><code>elevator.on("arrive", (eventName, floorNum) => {
+    // Maybe decide where to go next?
+});</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td><s>floor_button_pressed</s></td>
+							<td>
+								<small
+									>Deprecated. Use call instead. Triggered when a passenger has pressed a button
+									inside the elevator.</small
+								>
+							</td>
 							<td>
 								<pre><code>elevator.on("floor_button_pressed", (eventName, floorNum) => {
     // Maybe tell the elevator to go to that floor?
@@ -318,12 +375,13 @@ elevator.checkDestinationQueue();</code></pre>
 							</td>
 						</tr>
 						<tr>
-							<td>passing_floor</td>
+							<td><s>passing_floor</s></td>
 							<td>
 								<small
-									>Triggered slightly before the elevator will pass a floor. A good time to decide
-									whether to stop at that floor. Note that this event is not triggered for the
-									destination floor. Direction is either "up" or "down".</small
+									>Deprecated. Use willPassFloor instead. Triggered slightly before the elevator will
+									pass a floor. A good time to decide whether to stop at that floor. Note that this
+									event is not triggered for the destination floor. Direction is either "up" or
+									"down".</small
 								>
 							</td>
 							<td>
@@ -333,8 +391,13 @@ elevator.checkDestinationQueue();</code></pre>
 							</td>
 						</tr>
 						<tr>
-							<td>stopped_at_floor</td>
-							<td><small>Triggered when the elevator has arrived at a floor.</small></td>
+							<td><s>stopped_at_floor</s></td>
+							<td>
+								<small
+									>Deprecated. Use arrive instead. Triggered when the elevator has arrived at a
+									floor.</small
+								>
+							</td>
 							<td>
 								<pre><code>elevator.on("stopped_at_floor", (eventName, floorNum) => {
     // Maybe decide where to go next?
@@ -353,9 +416,23 @@ elevator.checkDestinationQueue();</code></pre>
 					</thead>
 					<tbody>
 						<tr>
-							<td>floorNum</td>
+							<td>number</td>
+							<td>number</td>
+							<td><small>Gets the floor number of the floor object. Read-only.</small></td>
+							<td>
+								<pre><code>if (floor.number > 3) {
+    // Do something
+}</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td><s>floorNum</s></td>
 							<td>function</td>
-							<td><small>Gets the floor number of the floor object.</small></td>
+							<td>
+								<small
+									>Deprecated. Use number instead. Gets the floor number of the floor object.</small
+								>
+							</td>
 							<td>
 								<pre><code>if (floor.floorNum() > 3) {
     // Do something
@@ -372,11 +449,27 @@ elevator.checkDestinationQueue();</code></pre>
 					</thead>
 					<tbody>
 						<tr>
-							<td>up_button_pressed</td>
+							<td>call</td>
 							<td>
 								<small
 									>Triggered when someone has pressed the up button at a floor. Note that passengers
-									will press the button again if they fail to enter an elevator.</small
+									will press the button again if they fail to enter an elevator. Direction is either
+									"up" or "down".</small
+								>
+							</td>
+							<td>
+								<pre><code>floor.on("call", (eventName, direction) => {
+// Maybe tell an elevator to go to this floor?
+});</code></pre>
+							</td>
+						</tr>
+						<tr>
+							<td><s>up_button_pressed</s></td>
+							<td>
+								<small
+									>Deprecated. Use call instead. Triggered when someone has pressed the up button at a
+									floor. Note that passengers will press the button again if they fail to enter an
+									elevator.</small
 								>
 							</td>
 							<td>
@@ -386,11 +479,12 @@ elevator.checkDestinationQueue();</code></pre>
 							</td>
 						</tr>
 						<tr>
-							<td>down_button_pressed</td>
+							<td><s>down_button_pressed</s></td>
 							<td>
 								<small
-									>Triggered when someone has pressed the down button at a floor. Note that passengers
-									will press the button again if they fail to enter an elevator.</small
+									>Deprecated. Use call instead. Triggered when someone has pressed the down button at
+									a floor. Note that passengers will press the button again if they fail to enter an
+									elevator.</small
 								>
 							</td>
 							<td>

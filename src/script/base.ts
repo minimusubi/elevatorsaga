@@ -1,5 +1,4 @@
-import ElevatorInterface from './interfaces.js';
-import Floor from './floor.js';
+import { ElevatorInterface, FloorInterface } from './interfaces.js';
 
 export const limitNumber = function (num: number, min: number, max: number) {
 	return Math.min(max, Math.max(num, min));
@@ -9,8 +8,11 @@ export const epsilonEquals = function (a: number, b: number) {
 	return Math.abs(a - b) < 0.00000001;
 };
 
-export const deprecationWarning = function (name: string) {
+export const deprecationWarning = function (name: string, replacement?: string) {
 	console.warn(`You are using a deprecated feature scheduled for removal: ${name}`);
+	if (replacement) {
+		console.warn(`Please use ${replacement} instead.`);
+	}
 };
 
 export const distanceNeededToAchieveSpeed = function (currentSpeed: number, targetSpeed: number, acceleration: number) {
@@ -54,8 +56,8 @@ export const createFrameRequester = function (timeStep: number) {
 };
 
 export interface UserModule {
-	init: (elevators: ElevatorInterface[], floors: Floor[]) => void;
-	update: (deltaTime: number, elevators: ElevatorInterface[], floors: Floor[]) => void;
+	init: (elevators: ElevatorInterface[], floors: FloorInterface[]) => void;
+	update: (deltaTime: number, elevators: ElevatorInterface[], floors: FloorInterface[]) => void;
 }
 
 export const getModuleFromUserCode = async function (code: string) {

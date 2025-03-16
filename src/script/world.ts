@@ -1,10 +1,10 @@
+import { ElevatorInterface, FloorInterface } from './interfaces.js';
 import Elevator from './elevator.js';
-import ElevatorInterface from './interfaces.js';
 import Emitter from './emitter.js';
 import Floor from './floor.js';
 import User from './user.js';
-import config from './config.js';
 import { UserModule } from './base.js';
+import config from './config.js';
 
 export interface WorldOptions {
 	floorHeight: number;
@@ -23,6 +23,7 @@ type WorldEvents = {
 export class World extends Emitter<WorldEvents> {
 	floorHeight: number;
 	floors: Floor[];
+	floorInterfaces: FloorInterface[];
 	elevators: Elevator[];
 	elevatorInterfaces: ElevatorInterface[];
 	spawnRate;
@@ -115,6 +116,9 @@ export class World extends Emitter<WorldEvents> {
 		};
 
 		this.floors = World.createFloors(mergedOptions.floorCount, mergedOptions.floorHeight, handleUserCodeError);
+		this.floorInterfaces = this.floors.map((floor) => {
+			return new FloorInterface(floor, handleUserCodeError);
+		});
 		this.elevators = World.createElevators(
 			mergedOptions.elevators,
 			mergedOptions.floorCount,
@@ -301,7 +305,7 @@ export class WorldController extends Emitter<WorldControllerEvents> {
 					firstUpdate = false;
 					// This logic prevents infite loops in usercode from breaking the page permanently - don't evaluate user code until game is unpaused.
 					try {
-						userModule.init(world.elevatorInterfaces, world.floors);
+						userModule.init(world.elevatorInterfaces, world.floorInterfaces);
 						world.init();
 					} catch (e) {
 						this.handleUserCodeError(e);
@@ -312,7 +316,7 @@ export class WorldController extends Emitter<WorldControllerEvents> {
 				let scaledDt = dt * 0.001 * this.timeScale;
 				scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
 				try {
-					userModule.update(scaledDt, world.elevatorInterfaces, world.floors);
+					userModule.update(scaledDt, world.elevatorInterfaces, world.floorInterfaces);
 				} catch (e) {
 					this.handleUserCodeError(e as Error);
 				}

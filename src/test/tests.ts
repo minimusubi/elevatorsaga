@@ -8,7 +8,7 @@ import {
 	requireUserCountWithinTimeWithMaxWaitTime,
 } from '../script/challenges.js';
 import Elevator from '../script/elevator.js';
-import ElevatorInterface from '../script/interfaces.js';
+import { ElevatorInterface } from '../script/interfaces.js';
 import Emitter from '../script/emitter.js';
 import Movable from '../script/movable.js';
 import User from '../script/user.js';
