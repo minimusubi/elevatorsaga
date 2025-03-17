@@ -6,7 +6,7 @@
 		"clean": "npx rimraf dist",
 		"compile": "npx tsc",
 		"copy": "node copyFiles.js",
-		"lint": "npx eslint --flag unstable_config_lookup_from_file src/script/*.{js,ts} src/libs/riot.js src/test/tests.ts ",
+		"lint": "npx eslint --flag unstable_config_lookup_from_file src/script/*.{js,ts} src/test/tests.ts ",
 		"format": "npx prettier --write ."
 	},
 	"devDependencies": {

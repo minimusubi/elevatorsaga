@@ -35,7 +35,7 @@ export default class Movable<TEvents extends Record<string, unknown[]> = Record<
 		this.trigger('new_state', this);
 	}
 
-	static linearInterpolate(value0: number, value1: number, x: number) {
+	static linearInterpolate(this: void, value0: number, value1: number, x: number) {
 		return value0 + (value1 - value0) * x;
 	}
 

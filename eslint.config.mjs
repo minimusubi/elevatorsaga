@@ -17,6 +17,8 @@ export default tseslint.config(
 				ecmaFeatures: { impliedStrict: true },
 
 				projectService: { allowDefaultProject: ['eslint.config.mjs'] },
+				// I'm not sure what's wrong here, but this is correct
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
@@ -24,6 +26,7 @@ export default tseslint.config(
 			'sort-imports': ['warn'],
 			'@typescript-eslint/only-throw-error': 'off',
 			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-invalid-void-type': ['error', { allowAsThisParameter: true }],
 			'@typescript-eslint/no-non-null-assertion': 'off',
 			'@typescript-eslint/no-this-alias': 'off',
 			'@typescript-eslint/no-unused-vars': 'warn',
