@@ -16,7 +16,7 @@ export default tseslint.config(
 			parserOptions: {
 				ecmaFeatures: { impliedStrict: true },
 
-				projectService: { allowDefaultProject: ['eslint.config.mjs'] },
+				projectService: { allowDefaultProject: ['copyFiles.js', 'eslint.config.mjs', 'watch.js'] },
 				// I'm not sure what's wrong here, but this is correct
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				tsconfigRootDir: import.meta.dirname,
