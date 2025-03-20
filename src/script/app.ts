@@ -14,6 +14,7 @@ import { Editor } from './editor.js';
 import Emitter from './emitter.js';
 import { challenges } from './challenges.js';
 import config from './config.js';
+import { fitnessSuite } from './fitness.js';
 import { getTemplate } from './util.js';
 import { isUserError } from './base.js';
 
@@ -189,24 +190,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 	editor.on('usercode_error', (eventName, error) => {
 		presentCodeStatus(codestatus, codeStatusTempl, error);
 	});
-	editor.on('change', () => {
-		document.querySelector('#fitness_message')!.classList.add('faded');
-		// const codeStr = editor.getContent();
-		// void fitnessSuite(codeStr, true, function (results) {
-		// 	var message = '';
-		// 	if (!results.error) {
-		// 		message =
-		// 			'Fitness avg wait times: ' +
-		// 			_.map(results, function (r) {
-		// 				return r.options.description + ': ' + r.result.avgWaitTime.toPrecision(3) + 's';
-		// 			}).join('&nbsp&nbsp&nbsp');
-		// 	} else {
-		// 		message = 'Could not compute fitness due to error: ' + results.error;
-		// 	}
-		// 	document.querySelector('#fitness_message').innerHTML = message
-		// 	document.querySelector('#fitness_message').classList.remove('faded');
-		// });
-	});
+	// editor.on('change', async () => {
+	// 	document.querySelector('#fitness_message')!.classList.add('faded');
+	// 	const codeStr = editor.getContent();
+	// 	let message = '';
+	// 	try {
+	// 		const results = await fitnessSuite(codeStr, true);
+	// 		message =
+	// 			'Fitness avg wait times: ' +
+	// 			results
+	// 				.map((result) => {
+	// 					return result.options.description + ': ' + result.result.avgWaitTime.toPrecision(3) + 's';
+	// 				})
+	// 				.join('&nbsp&nbsp&nbsp');
+	// 	} catch (error) {
+	// 		// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+	// 		message = 'Could not compute fitness due to error: ' + error;
+	// 	}
+	// 	document.querySelector('#fitness_message')!.innerHTML = message;
+	// 	document.querySelector('#fitness_message')!.classList.remove('faded');
+	// });
 	editor.trigger('change');
 
 	riot.route((path) => {
@@ -221,24 +224,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 		let requestedChallenge = 0;
 		let autoStart = false;
 		let timeScale = parseFloat(localStorage.getItem(config.STORAGE_KEY_TIMESCALE) ?? '2.0');
-		_.each(params, (val, key) => {
+		for (const [key, value] of Object.entries(params)) {
 			if (key === 'challenge') {
-				requestedChallenge = _.parseInt(val) - 1;
+				requestedChallenge = parseInt(value, 10) - 1;
 				if (requestedChallenge < 0 || requestedChallenge >= challenges.length) {
 					console.log('Invalid challenge index', requestedChallenge);
 					console.log('Defaulting to first challenge');
 					requestedChallenge = 0;
 				}
 			} else if (key === 'autostart') {
-				autoStart = val === 'false' ? false : true;
+				autoStart = value === 'false' ? false : true;
 			} else if (key === 'timescale') {
-				timeScale = parseFloat(val);
+				timeScale = parseFloat(value);
 			} else if (key === 'devtest') {
 				editor.setDevTestCode();
 			} else if (key === 'fullscreen') {
 				makeDemoFullscreen();
 			}
-		});
+		}
 		app.worldController.setTimeScale(timeScale);
 		void app.startChallenge(requestedChallenge, autoStart);
 	});

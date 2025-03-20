@@ -20,7 +20,6 @@
 		</style>
 		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
 
-		<script src="libs/lodash.min.js"></script>
 		<script src="libs/riot.js"></script>
 
 		<script type="module" src="script/app.js"></script>
@@ -96,35 +95,38 @@
 			}
 		</script>
 		<script type="text/plain" id="devtest-elev-implementation">
+			import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
+
 			export function init(elevators, floors) {
 				function selectElevatorForFloorPickup(floorNum) {
 					return _.max(elevators, (e) => {
-						return (_.contains(e.destinationQueue, floorNum) ? 4 : 0) +
-							(-e.destinationQueue.length * e.destinationQueue.length) +
-							(-e.loadFactor() * e.loadFactor() * 3);
+						return (
+							(e.destinationQueue.includes(floorNum) ? 4 : 0) +
+							-e.destinationQueue.length * e.destinationQueue.length +
+							-e.loadFactor() * e.loadFactor() * 3
+						);
 					});
 				}
 
-				_.each(floors, (floor) => {
-					floor.on("down_button_pressed up_button_pressed", () => {
-						const elevator = selectElevatorForFloorPickup(floor.level);
-						if (!_.contains(elevator.destinationQueue, floor.level)) {
-							elevator.goToFloor(floor.level);
+				for (const floor of floors) {
+					floor.on('call', (eventName, direction) => {
+						const elevator = selectElevatorForFloorPickup(floor.number);
+						if (!elevator.destinationQueue.includes(floor.number)) {
+							elevator.goToFloor(floor.number);
 						}
 					});
-				});
-				_.each(elevators, (elevator) => {
-					elevator.on("floor_button_pressed", (eventName, floorNum) => {
+				}
+				for (const elevator of elevators) {
+					elevator.on('call', (eventName, floorNum) => {
 						elevator.goToFloor(floorNum);
 					});
-					elevator.on("idle", () => {
+					elevator.on('idle', () => {
 						elevator.goToFloor(0);
 					});
-				});
+				}
 			}
 
-			export function update(dt, elevators, floors) {
-			}
+			export function update(dt, elevators, floors) {}
 		</script>
 	</head>
 	<body>

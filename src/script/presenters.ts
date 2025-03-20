@@ -177,9 +177,11 @@ export function presentWorld(
 
 	function renderElevatorButtons(states: boolean[]) {
 		// This is a rarely executed inner-inner loop, does not need efficiency
-		return _.map(states, (b, i) => {
-			return riot.render(elevatorButtonTempl, { floorNum: i });
-		}).join('');
+		return states
+			.map((value, i) => {
+				return riot.render(elevatorButtonTempl, { floorNum: i });
+			})
+			.join('');
 	}
 
 	function setUpElevator(elevator: Elevator) {

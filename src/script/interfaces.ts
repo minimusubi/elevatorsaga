@@ -1,3 +1,4 @@
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import Emitter, { EventCallback } from './emitter.js';
 import { deprecationWarning, epsilonEquals, limitNumber } from './base.js';
 import Elevator from './elevator.js';
@@ -36,7 +37,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 		elevator.on('stopped', (eventName, position) => {
 			if (this.destinationQueue.length && epsilonEquals(_.first(this.destinationQueue), position)) {
 				// Reached the destination, so remove element at front of queue
-				this.destinationQueue = _.rest(this.destinationQueue);
+				this.destinationQueue.shift();
 				if (elevator.isOnAFloor()) {
 					elevator.wait(1, () => {
 						this.checkDestinationQueue();
@@ -85,7 +86,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 		floorNum = limitNumber(Number(floorNum), 0, this.#floorCount - 1);
 		// Auto-prevent immediately duplicate destinations
 		if (this.destinationQueue.length) {
-			const adjacentElement = forceNow ? _.first(this.destinationQueue) : _.last(this.destinationQueue);
+			const adjacentElement = (forceNow ? _.first(this.destinationQueue) : _.last(this.destinationQueue))!;
 			if (epsilonEquals(floorNum, adjacentElement)) {
 				return;
 			}

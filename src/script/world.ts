@@ -1,3 +1,4 @@
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import { ElevatorInterface, FloorInterface } from './interfaces.js';
 import Elevator from './elevator.js';
 import Emitter from './emitter.js';
@@ -39,9 +40,9 @@ export class World extends Emitter<WorldEvents> {
 	challengeEnded = false;
 
 	static createFloors(floorCount: number, floorHeight: number, errorHandler: (error: any) => void) {
-		const floors = _.map(_.range(floorCount), (e, i) => {
-			const yPos = (floorCount - 1 - i) * floorHeight;
-			const floor = new Floor(i, yPos, errorHandler);
+		const floors = _.list(floorCount - 1).map((number) => {
+			const yPos = (floorCount - 1 - number) * floorHeight;
+			const floor = new Floor(number, yPos, errorHandler);
 			return floor;
 		});
 		return floors;
@@ -65,9 +66,9 @@ export class World extends Emitter<WorldEvents> {
 	static createRandomUser() {
 		const weight = _.random(55, 100);
 		let type;
-		if (_.random(40) === 0) {
+		if (_.random(0, 40) === 0) {
 			type = 'child';
-		} else if (_.random(1) === 0) {
+		} else if (_.random(0, 1) === 0) {
 			type = 'female';
 		} else {
 			type = 'male';
@@ -79,15 +80,15 @@ export class World extends Emitter<WorldEvents> {
 
 	static spawnUserRandomly(floors: Floor[]) {
 		const user = World.createRandomUser();
-		user.moveTo(105 + _.random(40), 0);
-		const currentFloor = _.random(1) === 0 ? 0 : _.random(floors.length - 1);
+		user.moveTo(105 + _.random(0, 40), 0);
+		const currentFloor = _.random(0, 1) === 0 ? 0 : _.random(0, floors.length - 1);
 		let destinationFloor;
 		if (currentFloor === 0) {
 			// Definitely going up
 			destinationFloor = _.random(1, floors.length - 1);
 		} else {
 			// Usually going down, but sometimes not
-			if (_.random(10) === 0) {
+			if (_.random(0, 10) === 0) {
 				destinationFloor = (currentFloor + _.random(1, floors.length - 1)) % floors.length;
 			} else {
 				destinationFloor = 0;
@@ -189,7 +190,7 @@ export class World extends Emitter<WorldEvents> {
 
 	#handleButtonRepressing = (eventName: 'up_button_pressed' | 'down_button_pressed', floor: Floor) => {
 		// Need randomize iteration order or we'll tend to fill upp first elevator
-		for (let i = 0, len = this.elevators.length, offset = _.random(len - 1); i < len; ++i) {
+		for (let i = 0, len = this.elevators.length, offset = _.random(0, len - 1); i < len; ++i) {
 			const elevIndex = (i + offset) % len;
 			const elevator = this.elevators[elevIndex];
 			if (

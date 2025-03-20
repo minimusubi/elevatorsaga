@@ -1,3 +1,4 @@
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import {
 	accelerationNeededToAchieveChangeDistance,
 	deprecationWarning,
@@ -69,10 +70,10 @@ export default class Elevator extends Movable<ElevatorEvents> {
 		this.floorHeight = floorHeight;
 		this.maxUsers = maxUsers;
 
-		this.buttonStates = _.map(_.range(floorCount), (e, i) => {
+		this.buttonStates = _.list(floorCount - 1).map(() => {
 			return false;
 		});
-		this.userSlots = _.map(_.range(this.maxUsers), (user, i) => {
+		this.userSlots = _.list(this.maxUsers).map((user, i) => {
 			return { pos: [2 + i * 10, 30], user: null };
 		});
 		this.width = this.maxUsers * 10;
@@ -107,7 +108,7 @@ export default class Elevator extends Movable<ElevatorEvents> {
 	}
 
 	userEntering(user: User) {
-		const randomOffset = _.random(this.userSlots.length - 1);
+		const randomOffset = _.random(0, this.userSlots.length - 1);
 		for (let i = 0; i < this.userSlots.length; i++) {
 			const slot = this.userSlots[(i + randomOffset) % this.userSlots.length];
 			if (slot.user === null) {
@@ -281,13 +282,9 @@ export default class Elevator extends Movable<ElevatorEvents> {
 	}
 
 	getLoadFactor() {
-		const load = _.reduce(
-			this.userSlots,
-			(sum, slot) => {
-				return sum + (slot.user ? slot.user.weight : 0);
-			},
-			0,
-		);
+		const load = this.userSlots.reduce((sum, slot) => {
+			return sum + (slot.user ? slot.user.weight : 0);
+		}, 0);
 		return load / (this.maxUsers * 100);
 	}
 

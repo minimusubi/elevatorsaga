@@ -1,3 +1,4 @@
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import type * as monaco from 'monaco-editor';
 import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
 import * as prettierPluginBabel from 'https://unpkg.com/prettier@3.5.2/plugins/babel.mjs';
@@ -79,9 +80,9 @@ export class Editor extends Emitter<EditorEvents> {
 			this.setContent(getCodeTemplate('default-elev-implementation'));
 		};
 
-		const autoSave = _.debounce(() => {
+		const autoSave = _.debounce({ delay: 1000 }, () => {
 			void this.save(true);
-		}, 1000);
+		});
 		this.editor.onDidChangeModelContent(() => {
 			autoSave();
 		});

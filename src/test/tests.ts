@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import { FrameRequester, UserModule, createFrameRequester, getModuleFromUserCode } from '../script/base.js';
 import { World, WorldController } from '../script/world.js';
 import {
@@ -244,7 +245,7 @@ describe('Elevator Saga', () => {
 		});
 
 		it('moves to floors specified', () => {
-			_.each(_.range(0, floorCount - 1), (floor) => {
+			for (let floor = 0; floor < floorCount - 1; floor++) {
 				e.goToFloor(floor);
 				timeForwarder(10.0, 0.015, (dt) => {
 					e.update(dt);
@@ -253,7 +254,7 @@ describe('Elevator Saga', () => {
 				const expectedY = floorHeight * (floorCount - 1) - floorHeight * floor;
 				expect(e.y).toBe(expectedY);
 				expect(e.currentFloor).toBe(floor, 'Floor num');
-			});
+			}
 		});
 
 		it('can change direction', () => {
@@ -395,7 +396,7 @@ describe('Elevator Saga', () => {
 		});
 
 		it('doesnt seem to overshoot when stopping at floors', () => {
-			_.each(_.range(60, 120, 2.32133), (updatesPerSecond) => {
+			for (let updatesPerSecond = 60; updatesPerSecond < 120; updatesPerSecond += 2.32133) {
 				const STEPSIZE = 1.0 / updatesPerSecond;
 				e.setFloorPosition(1);
 				e.goToFloor(3);
@@ -405,7 +406,7 @@ describe('Elevator Saga', () => {
 					expect(e.getExactCurrentFloor()).toBeWithinRange(1.0, 3.0, `(STEPSIZE is ${STEPSIZE})`);
 				});
 				expect(e.getExactCurrentFloor()).toEqual(3.0);
-			});
+			}
 		});
 	});
 
@@ -517,13 +518,13 @@ describe('Elevator Saga', () => {
 
 			it('normalizes load factor', () => {
 				const fnNewUser = function () {
-						return { weight: _.random(55, 100) };
+						return { weight: _.random(55, 100) } as User;
 					},
 					fnEnterElevator = function (user: User) {
 						e.userEntering(user);
 					};
 
-				_.chain(_.range(20)).map(fnNewUser).forEach(fnEnterElevator);
+				[..._.range(19)].map(fnNewUser).forEach(fnEnterElevator);
 				const load = elevInterface.loadFactor();
 				expect(load >= 0 && load <= 1).toBeTruthy();
 			});

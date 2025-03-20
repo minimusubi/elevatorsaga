@@ -1,8 +1,10 @@
+import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import { Challenge, getElevatorConfig } from './challenges.js';
 import { UserModule, createFrameRequester, getModuleFromUserCode } from './base.js';
-import { World, WorldController } from './world.js';
+import { World, WorldController, WorldOptions } from './world.js';
+import { FitnessWorkerMessage } from './worker/fitnessworker.js';
 
-const requireNothing = function () {
+const requireNothing: () => FitnessCondition = function () {
 	return {
 		description: 'No requirement',
 		evaluate: function () {
@@ -11,7 +13,19 @@ const requireNothing = function () {
 	};
 };
 
-const fitnessChallenges = [
+type TestOptions = Omit<WorldOptions, 'floorHeight'> & { description: string };
+
+interface FitnessCondition {
+	description: 'No requirement';
+	evaluate: () => null | boolean;
+}
+
+interface FitnessChallenge {
+	options: TestOptions;
+	condition: FitnessCondition;
+}
+
+const fitnessChallenges: FitnessChallenge[] = [
 	{
 		options: { description: 'Small scenario', floorCount: 4, elevators: getElevatorConfig(2, 4), spawnRate: 0.6 },
 		condition: requireNothing(),
@@ -27,10 +41,14 @@ const fitnessChallenges = [
 ];
 
 interface FitnessResult {
-	error?: unknown;
-	transportedPerSec?: number;
-	avgWaitTime?: number;
-	transportedCount?: number;
+	avgWaitTime: number;
+	transportedCount: number;
+	transportedPerSec: number;
+}
+
+export interface TestRun {
+	options: TestOptions;
+	result: FitnessResult;
 }
 
 // Simulation without visualisation
@@ -42,7 +60,7 @@ function calculateFitness(challenge: Challenge, codeObj: UserModule, stepSize: n
 	const frameRequester = createFrameRequester(stepSize);
 
 	controller.on('usercode_error', (eventName, error) => {
-		result.error = error;
+		throw error;
 	});
 	world.on('stats_changed', () => {
 		result.transportedPerSec = world.transportedPerSec;
@@ -55,73 +73,73 @@ function calculateFitness(challenge: Challenge, codeObj: UserModule, stepSize: n
 	for (let stepCount = 0; stepCount < stepsToSimulate && !controller.isPaused; stepCount++) {
 		frameRequester.trigger();
 	}
-	return result;
+	return result as FitnessResult;
 }
 
-function makeAverageResult(results) {
-	const averagedResult = {};
-	_.forOwn(results[0].result, (value, resultProperty) => {
-		const sum = _.sum(_.pluck(_.pluck(results, 'result'), resultProperty));
-		averagedResult[resultProperty] = sum / results.length;
-	});
-	return { options: results[0].options, result: averagedResult };
-}
+function makeAverageResult(results: TestRun[]): TestRun {
+	console.log({ results });
 
-export async function doFitnessSuite(codeStr: string, runCount: number) {
-	let userModule;
-	try {
-		userModule = await getModuleFromUserCode(codeStr);
-	} catch (e) {
-		return { error: `${e}` };
+	const averagedResult: Partial<FitnessResult> = {};
+	for (const [property] of Object.entries(results[0].result) as [keyof FitnessResult, number][]) {
+		const sum = _.sum(
+			results.map((result) => {
+				return result.result[property];
+			}),
+		);
+		averagedResult[property] = sum / results.length;
 	}
-	console.log('Fitness testing code', userModule);
-	let error: unknown | null = null;
+	return { options: results[0].options, result: averagedResult as FitnessResult };
+}
 
-	const testruns = [];
-	_.times(runCount, () => {
-		const results = _.map(fitnessChallenges, (challenge) => {
+/**
+ * @throws
+ */
+export async function doFitnessSuite(codeStr: string, runCount: number) {
+	const userModule = await getModuleFromUserCode(codeStr);
+	console.log('Fitness testing code', userModule);
+
+	const testruns: TestRun[][] = [];
+	for (let i = 0; i < runCount; i++) {
+		const results = fitnessChallenges.map((challenge) => {
 			const fitness = calculateFitness(challenge, userModule, 1000.0 / 60.0, 12000);
-			if (fitness.error) {
-				error = fitness.error;
-				return;
-			}
 			return { options: challenge.options, result: fitness };
 		});
-		if (error) {
-			return;
-		}
 		testruns.push(results);
-	});
-	if (error) {
-		return { error: `${error}` };
 	}
 
 	// Now do averaging over all properties for each challenge's test runs
-	const averagedResults = _.map(_.range(testruns[0].length), (n) => {
-		return makeAverageResult(_.pluck(testruns, n));
+	const averagedResults = [..._.range(testruns[0].length - 1)].map((index) => {
+		return makeAverageResult(testruns[index]);
 	});
 
 	return averagedResults;
 }
 
-async function fitnessSuite(codeStr: string, preferWorker: boolean, callback: (results: any) => void) {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Web worker browser check
-	if (!!Worker && preferWorker) {
-		// Web workers are available, neat.
-		try {
-			const w = new Worker('script/worker/fitnessworker.js');
-			w.postMessage(codeStr);
-			w.onmessage = function (msg) {
-				console.log('Got message from fitness worker', msg);
-				const results = msg.data as PromiseFulfilledResult<ReturnType<typeof doFitnessSuite>>;
-				callback(results);
-			};
-			return;
-		} catch (e) {
-			console.log('Fitness worker creation failed, falling back to normal', e);
+export async function fitnessSuite(codeStr: string, preferWorker: boolean): Promise<TestRun[]> {
+	return new Promise((resolve, reject) => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Web worker browser check
+		if (!!Worker && preferWorker) {
+			// Web workers are available, neat.
+			try {
+				const w = new Worker('script/worker/fitnessworker.js');
+				w.postMessage(codeStr);
+				w.onmessage = function (msg) {
+					console.log('Got message from fitness worker', msg);
+					const message = msg.data as FitnessWorkerMessage;
+
+					if (message.error) {
+						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+						reject(message.error);
+					} else {
+						resolve(message.results!);
+					}
+				};
+				return;
+			} catch (e) {
+				console.log('Fitness worker creation failed, falling back to normal', e);
+			}
 		}
-	}
-	// Fall back do synch calculation without web worker
-	const results = await doFitnessSuite(codeStr, 2);
-	callback(results);
+		// Fall back do synch calculation without web worker
+		doFitnessSuite(codeStr, 2).then(resolve).catch(reject);
+	});
 }

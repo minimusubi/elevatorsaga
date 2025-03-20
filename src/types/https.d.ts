@@ -13,3 +13,7 @@ declare module 'https://unpkg.com/prettier@3.5.2/plugins/estree.mjs' {
 declare module 'https://esm.sh/@monaco-editor/loader@1.5.0' {
 	export * from '@monaco-editor/loader';
 }
+
+declare module 'https://unpkg.com/radashi@12.4.0/dist/radashi.js' {
+	export * from 'radashi';
+}
