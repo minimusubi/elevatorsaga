@@ -10,18 +10,18 @@ interface NativeEventListener {
 export default class Emitter<TEvents extends Record<string, unknown[]> = Record<string, never>> {
 	#eventTarget = new EventTarget();
 	// Use a mapped type so each event key gets its own Map with the right callback type
-	listeners: { [K in Extract<keyof TEvents, string>]?: Map<EventCallback<TEvents, K>, NativeEventListener> } = {};
+	#listeners: { [K in Extract<keyof TEvents, string>]?: Map<EventCallback<TEvents, K>, NativeEventListener> } = {};
 
 	#attachListener<TEventName extends Extract<keyof TEvents, string>>(
 		eventName: TEventName,
 		originalCallback: EventCallback<TEvents, TEventName>,
 		wrappedCallback: NativeEventListener,
 	) {
-		if (!this.listeners[eventName]) {
-			this.listeners[eventName] = new Map<EventCallback<TEvents, TEventName>, NativeEventListener>();
+		if (!this.#listeners[eventName]) {
+			this.#listeners[eventName] = new Map<EventCallback<TEvents, TEventName>, NativeEventListener>();
 		}
 
-		const callbackMap = this.listeners[eventName]!;
+		const callbackMap = this.#listeners[eventName]!;
 		if (callbackMap.has(originalCallback)) {
 			return;
 		}
@@ -55,7 +55,7 @@ export default class Emitter<TEvents extends Record<string, unknown[]> = Record<
 		callback?: EventCallback<TEvents, TEventName>,
 	) {
 		for (const event of eventNames) {
-			const callbackMap = this.listeners[event];
+			const callbackMap = this.#listeners[event];
 
 			if (callbackMap) {
 				if (callback) {
@@ -68,7 +68,7 @@ export default class Emitter<TEvents extends Record<string, unknown[]> = Record<
 						this.#eventTarget.removeEventListener(event, wrappedCallback as EventListener);
 					}
 
-					this.listeners[event] = undefined;
+					this.#listeners[event] = undefined;
 				}
 			}
 		}
@@ -81,7 +81,7 @@ export default class Emitter<TEvents extends Record<string, unknown[]> = Record<
 		let events;
 
 		if (eventName === '*') {
-			events = Object.keys(this.listeners) as TEventName[];
+			events = Object.keys(this.#listeners) as TEventName[];
 		} else {
 			events = [eventName];
 		}
