@@ -59,7 +59,7 @@ function calculateFitness(challenge: Challenge, codeObj: UserModule, stepSize: n
 	const world = new World(challenge.options);
 	const frameRequester = createFrameRequester(stepSize);
 
-	controller.on('usercode_error', (eventName, error) => {
+	controller.on('usercode_error', (event, error) => {
 		throw error;
 	});
 	world.on('stats_changed', () => {

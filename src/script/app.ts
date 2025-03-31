@@ -63,7 +63,7 @@ export class App extends Emitter {
 		super();
 
 		this.editor = editor;
-		this.worldController.on('usercode_error', (eventName, error) => {
+		this.worldController.on('usercode_error', (event, error) => {
 			console.log('World raised code error', error);
 			editor.trigger('usercode_error', error);
 		});
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	editor.on('code_success', () => {
 		presentCodeStatus(codestatus, codeStatusTempl);
 	});
-	editor.on('usercode_error', (eventName, error) => {
+	editor.on('usercode_error', (event, error) => {
 		presentCodeStatus(codestatus, codeStatusTempl, error);
 	});
 	// editor.on('change', async () => {

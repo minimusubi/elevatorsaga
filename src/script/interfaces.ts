@@ -34,7 +34,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 		this.#errorHandler = errorHandler;
 		this.destinationQueue = [];
 
-		elevator.on('stopped', (eventName, position) => {
+		elevator.on('stopped', (event, position) => {
 			if (this.destinationQueue.length && epsilonEquals(_.first(this.destinationQueue), position)) {
 				// Reached the destination, so remove element at front of queue
 				this.destinationQueue.shift();
@@ -48,16 +48,16 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 			}
 		});
 
-		elevator.on('passing_floor', (eventName, floorNum, direction) => {
+		elevator.on('passing_floor', (event, floorNum, direction) => {
 			this.#tryTrigger('passing_floor', floorNum, direction);
 			this.#tryTrigger('willPassFloor', floorNum, direction);
 		});
 
-		elevator.on('stopped_at_floor', (eventName, floorNum) => {
+		elevator.on('stopped_at_floor', (event, floorNum) => {
 			this.#tryTrigger('stopped_at_floor', floorNum);
 			this.#tryTrigger('arrive', floorNum);
 		});
-		elevator.on('floor_button_pressed', (eventName, floorNum) => {
+		elevator.on('floor_button_pressed', (event, floorNum) => {
 			this.#tryTrigger('floor_button_pressed', floorNum);
 			this.#tryTrigger('call', floorNum);
 		});
@@ -170,7 +170,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 
 	on<TEventName extends Extract<keyof ElevatorInterfaceEvents, string>>(
 		eventName: TEventName,
-		callback: EventCallback<ElevatorInterfaceEvents, TEventName>,
+		callback: EventCallback<this, ElevatorInterfaceEvents, TEventName>,
 	) {
 		this.#warnDeprecatedEvent(eventName);
 		super.on(eventName, callback);
@@ -178,7 +178,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 
 	once<TEventName extends Extract<keyof ElevatorInterfaceEvents, string>>(
 		eventName: TEventName,
-		callback: EventCallback<ElevatorInterfaceEvents, TEventName>,
+		callback: EventCallback<this, ElevatorInterfaceEvents, TEventName>,
 	) {
 		this.#warnDeprecatedEvent(eventName);
 		super.once(eventName, callback);
@@ -204,11 +204,11 @@ export class FloorInterface extends Emitter<FloorInterfaceEvents> {
 		this.#floor = floor;
 		this.#errorHandler = errorHandler;
 
-		floor.on('up_button_pressed', (eventName, ...args) => {
+		floor.on('up_button_pressed', (event, ...args) => {
 			this.#tryTrigger('up_button_pressed', ...args);
 			this.#tryTrigger('call', 'up', this);
 		});
-		floor.on('down_button_pressed', (eventName, ...args) => {
+		floor.on('down_button_pressed', (event, ...args) => {
 			this.#tryTrigger('down_button_pressed', ...args);
 			this.#tryTrigger('call', 'down', this);
 		});
@@ -244,7 +244,7 @@ export class FloorInterface extends Emitter<FloorInterfaceEvents> {
 
 	on<TEventName extends Extract<keyof FloorInterfaceEvents, string>>(
 		eventName: TEventName,
-		callback: EventCallback<FloorInterfaceEvents, TEventName>,
+		callback: EventCallback<this, FloorInterfaceEvents, TEventName>,
 	) {
 		this.#warnDeprecatedEvent(eventName);
 		super.on(eventName, callback);
@@ -252,7 +252,7 @@ export class FloorInterface extends Emitter<FloorInterfaceEvents> {
 
 	once<TEventName extends Extract<keyof FloorInterfaceEvents, string>>(
 		eventName: TEventName,
-		callback: EventCallback<FloorInterfaceEvents, TEventName>,
+		callback: EventCallback<this, FloorInterfaceEvents, TEventName>,
 	) {
 		this.#warnDeprecatedEvent(eventName);
 		super.once(eventName, callback);

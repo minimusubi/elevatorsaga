@@ -6,10 +6,11 @@ import {
 	epsilonEquals,
 	limitNumber,
 } from './base.js';
+import { EmitterEvent } from './emitter.js';
 import Movable from './movable.js';
 import User from './user.js';
 
-function newElevStateHandler(eventName: string, elevator: Elevator) {
+function newElevStateHandler(event: EmitterEvent<Elevator, 'new_state'>, elevator: Elevator) {
 	elevator.handleNewState();
 }
 
@@ -81,7 +82,7 @@ export default class Elevator extends Movable<ElevatorEvents> {
 
 		this.on('new_state', newElevStateHandler);
 
-		this.on('change:goingUpIndicator', (eventName, value) => {
+		this.on('change:goingUpIndicator', (event, value) => {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {
@@ -90,7 +91,7 @@ export default class Elevator extends Movable<ElevatorEvents> {
 			}
 		});
 
-		this.on('change:goingDownIndicator', (eventName, value) => {
+		this.on('change:goingDownIndicator', (event, value) => {
 			this.trigger('indicatorstate_change', { up: this.goingUpIndicator, down: this.goingDownIndicator });
 
 			if (this.worldY == this.getYPosOfFloor(this.getExactFloorOfYPos(this.worldY))) {

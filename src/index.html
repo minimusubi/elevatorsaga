@@ -109,7 +109,7 @@
 				}
 
 				for (const floor of floors) {
-					floor.on('call', (eventName, direction) => {
+					floor.on('call', (event, direction) => {
 						const elevator = selectElevatorForFloorPickup(floor.number);
 						if (!elevator.destinationQueue.includes(floor.number)) {
 							elevator.goToFloor(floor.number);
@@ -117,7 +117,7 @@
 					});
 				}
 				for (const elevator of elevators) {
-					elevator.on('call', (eventName, floorNum) => {
+					elevator.on('call', (event, floorNum) => {
 						elevator.goToFloor(floorNum);
 					});
 					elevator.on('idle', () => {

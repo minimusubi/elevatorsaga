@@ -1,7 +1,7 @@
 import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import { ElevatorInterface, FloorInterface } from './interfaces.js';
+import Emitter, { EmitterEvent } from './emitter.js';
 import Elevator from './elevator.js';
-import Emitter from './emitter.js';
 import Floor from './floor.js';
 import User from './user.js';
 import { UserModule } from './base.js';
@@ -170,7 +170,7 @@ export class World extends Emitter<WorldEvents> {
 		user.updateDisplayPosition(true);
 	}
 
-	#handleElevAvailability = (eventName: string, elevator: Elevator) => {
+	#handleElevAvailability = (event: EmitterEvent<Elevator, 'entrance_available'>, elevator: Elevator) => {
 		// Use regular loops for memory/performance reasons
 		// Notify floors first because overflowing users
 		// will press buttons again.
@@ -188,14 +188,17 @@ export class World extends Emitter<WorldEvents> {
 		}
 	};
 
-	#handleButtonRepressing = (eventName: 'up_button_pressed' | 'down_button_pressed', floor: Floor) => {
+	#handleButtonRepressing = (
+		event: EmitterEvent<Floor, 'up_button_pressed' | 'down_button_pressed'>,
+		floor: Floor,
+	) => {
 		// Need randomize iteration order or we'll tend to fill upp first elevator
 		for (let i = 0, len = this.elevators.length, offset = _.random(0, len - 1); i < len; ++i) {
 			const elevIndex = (i + offset) % len;
 			const elevator = this.elevators[elevIndex];
 			if (
-				(eventName === 'up_button_pressed' && elevator.goingUpIndicator) ||
-				(eventName === 'down_button_pressed' && elevator.goingDownIndicator)
+				(event.type === 'up_button_pressed' && elevator.goingUpIndicator) ||
+				(event.type === 'down_button_pressed' && elevator.goingDownIndicator)
 			) {
 				// Elevator is heading in correct direction, check for suitability
 				if (
@@ -297,7 +300,7 @@ export class WorldController extends Emitter<WorldControllerEvents> {
 		let lastT: number | null = null;
 		let firstUpdate = true;
 		let timeSinceStatsUpdate = Infinity;
-		world.on('usercode_error', (eventName, error) => {
+		world.on('usercode_error', (event, error) => {
 			this.handleUserCodeError(error);
 		});
 		const updater = (t: number) => {

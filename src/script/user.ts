@@ -18,7 +18,7 @@ export default class User extends Movable<UserEvents> {
 	destinationFloor = 0;
 	done = false;
 	removeMe = false;
-	exitAvailableHandler?: EventCallback<ElevatorEvents, 'exit_available'>;
+	exitAvailableHandler?: EventCallback<Elevator, ElevatorEvents, 'exit_available'>;
 	spawnTimestamp?: number;
 
 	constructor(weight: number, displayType: string) {
@@ -84,7 +84,7 @@ export default class User extends Movable<UserEvents> {
 			this.moveToOverTime(pos[0], pos[1], 1, undefined, () => {
 				elevator.pressFloorButton(self.destinationFloor);
 			});
-			this.exitAvailableHandler = function (eventName, floorNum: number, elevator: Elevator) {
+			this.exitAvailableHandler = function (event, floorNum: number, elevator: Elevator) {
 				self.handleExit(elevator.currentFloor, elevator);
 			};
 			elevator.on('exit_available', this.exitAvailableHandler);

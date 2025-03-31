@@ -332,7 +332,7 @@ describe('Elevator Saga', () => {
 
 		it('emits no passing floor events when going from floor 0 to 1', () => {
 			e.on('passing_floor', handlers.someHandler);
-			e.on('passing_floor', (eventName, floorNum, direction) => {
+			e.on('passing_floor', (event, floorNum, direction) => {
 				console.log('Passing floor yo', floorNum, direction);
 			});
 			e.goToFloor(1);
@@ -380,7 +380,7 @@ describe('Elevator Saga', () => {
 		});
 		it('doesnt raise unexpected events when told to stop(ish) when passing floor', () => {
 			let passingFloorEventCount = 0;
-			e.on('passing_floor', (eventName, floorNum, direction) => {
+			e.on('passing_floor', (event, floorNum, direction) => {
 				expect(floorNum).toBe(1, 'floor being passed');
 				expect(direction).toBe('up');
 				passingFloorEventCount++;
@@ -533,7 +533,7 @@ describe('Elevator Saga', () => {
 				e.setFloorPosition(2);
 				elevInterface.goToFloor(0);
 				let passingFloorEventCount = 0;
-				elevInterface.on('passing_floor', (eventName, floorNum, direction) => {
+				elevInterface.on('passing_floor', (event, floorNum, direction) => {
 					passingFloorEventCount++;
 					// We only expect to be passing floor 1, but it is possible and ok that several
 					// such events are raised, due to possible overshoot.

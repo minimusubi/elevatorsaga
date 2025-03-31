@@ -99,7 +99,7 @@ export function update(deltaTime, elevators, floors) {
 				<p>It is possible to listen for events, like when stopping at a floor, or a button has been pressed.</p>
 				<dl>
 					<dt>
-						<pre><code>elevator.on("idle", (eventName) => {
+						<pre><code>elevator.on("idle", (event) => {
 	elevator.goToFloor(0);
 });</code></pre>
 					</dt>
@@ -108,7 +108,7 @@ export function update(deltaTime, elevators, floors) {
 						elevator is doing nothing. In this example we tell it to move to floor 0.
 					</dd>
 					<dt>
-						<pre><code>elevator.on("call", (eventName, floorNum) => {
+						<pre><code>elevator.on("call", (event, floorNum) => {
 	// Someone pushed a floor button in the elevator
 });</code></pre>
 					</dt>
@@ -117,7 +117,7 @@ export function update(deltaTime, elevators, floors) {
 						indicates that the passenger wants to go to that floor.
 					</dd>
 					<dt>
-						<pre><code>floor.on("call", (eventName, direction) => {
+						<pre><code>floor.on("call", (event, direction) => {
 	if (direction === 'up') {
 		// Someone pressed the up button
 	} else {
@@ -322,7 +322,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("idle", (eventName) => {
+								<pre><code>elevator.on("idle", (event) => {
 	// Do something
 });</code></pre>
 							</td>
@@ -331,7 +331,7 @@ elevator.checkDestinationQueue();</code></pre>
 							<td>call</td>
 							<td><small>Triggered when a passenger has pressed a button inside the elevator.</small></td>
 							<td>
-								<pre><code>elevator.on("call", (eventName, floorNum) => {
+								<pre><code>elevator.on("call", (event, floorNum) => {
 	// Maybe tell the elevator to go to that floor?
 });</code></pre>
 							</td>
@@ -346,7 +346,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("willPassFloor", (eventName, floorNum, direction) => {
+								<pre><code>elevator.on("willPassFloor", (event, floorNum, direction) => {
 	// Do something
 });</code></pre>
 							</td>
@@ -355,7 +355,7 @@ elevator.checkDestinationQueue();</code></pre>
 							<td>arrive</td>
 							<td><small>Triggered when the elevator has arrived at a floor.</small></td>
 							<td>
-								<pre><code>elevator.on("arrive", (eventName, floorNum) => {
+								<pre><code>elevator.on("arrive", (event, floorNum) => {
 	// Maybe decide where to go next?
 });</code></pre>
 							</td>
@@ -369,7 +369,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("floor_button_pressed", (eventName, floorNum) => {
+								<pre><code>elevator.on("floor_button_pressed", (event, floorNum) => {
 	// Maybe tell the elevator to go to that floor?
 });</code></pre>
 							</td>
@@ -385,7 +385,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("passing_floor", (eventName, floorNum, direction) => {
+								<pre><code>elevator.on("passing_floor", (event, floorNum, direction) => {
 	// Do something
 });</code></pre>
 							</td>
@@ -399,7 +399,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>elevator.on("stopped_at_floor", (eventName, floorNum) => {
+								<pre><code>elevator.on("stopped_at_floor", (event, floorNum) => {
 	// Maybe decide where to go next?
 });</code></pre>
 							</td>
@@ -458,7 +458,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>floor.on("call", (eventName, direction) => {
+								<pre><code>floor.on("call", (event, direction) => {
 // Maybe tell an elevator to go to this floor?
 });</code></pre>
 							</td>
@@ -473,7 +473,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>floor.on("up_button_pressed", (eventName) => {
+								<pre><code>floor.on("up_button_pressed", (event) => {
 	// Maybe tell an elevator to go to this floor?
 });</code></pre>
 							</td>
@@ -488,7 +488,7 @@ elevator.checkDestinationQueue();</code></pre>
 								>
 							</td>
 							<td>
-								<pre><code>floor.on("down_button_pressed", (eventName) => {
+								<pre><code>floor.on("down_button_pressed", (event) => {
 	// Maybe tell an elevator to go to this floor?
 });</code></pre>
 							</td>
