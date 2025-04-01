@@ -430,6 +430,7 @@ describe('Elevator Saga', () => {
 				});
 
 				it('does not propagate stopped event', () => {
+					// @ts-expect-error The 'stopped' event is not part of the interface
 					elevInterface.on('stopped', handlers.someHandler);
 					e.trigger('stopped', 3.1);
 					expect(handlers.someHandler).not.toHaveBeenCalled();
