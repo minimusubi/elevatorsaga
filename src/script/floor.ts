@@ -28,20 +28,16 @@ export default class Floor extends Emitter<FloorEvents> {
 		this.errorHandler = errorHandler;
 	}
 
-	tryTrigger(event: keyof FloorEvents, ...args: FloorEvents[keyof FloorEvents]) {
-		try {
-			this.trigger(event, ...args);
-		} catch (e) {
-			this.errorHandler(e);
-		}
+	trigger(event: keyof FloorEvents, ...args: FloorEvents[keyof FloorEvents]) {
+		super.triggerSafe(event, this.errorHandler, ...args);
 	}
 
 	pressUpButton() {
 		const prev = this.buttonStates.up;
 		this.buttonStates.up = 'activated';
 		if (prev !== this.buttonStates.up) {
-			this.tryTrigger('buttonstate_change', this.buttonStates);
-			this.tryTrigger('up_button_pressed', this);
+			this.trigger('buttonstate_change', this.buttonStates);
+			this.trigger('up_button_pressed', this);
 		}
 	}
 
@@ -49,19 +45,19 @@ export default class Floor extends Emitter<FloorEvents> {
 		const prev = this.buttonStates.down;
 		this.buttonStates.down = 'activated';
 		if (prev !== this.buttonStates.down) {
-			this.tryTrigger('buttonstate_change', this.buttonStates);
-			this.tryTrigger('down_button_pressed', this);
+			this.trigger('buttonstate_change', this.buttonStates);
+			this.trigger('down_button_pressed', this);
 		}
 	}
 
 	elevatorAvailable(elevator: Elevator) {
 		if (elevator.goingUpIndicator && this.buttonStates.up) {
 			this.buttonStates.up = '';
-			this.tryTrigger('buttonstate_change', this.buttonStates);
+			this.trigger('buttonstate_change', this.buttonStates);
 		}
 		if (elevator.goingDownIndicator && this.buttonStates.down) {
 			this.buttonStates.down = '';
-			this.tryTrigger('buttonstate_change', this.buttonStates);
+			this.trigger('buttonstate_change', this.buttonStates);
 		}
 	}
 

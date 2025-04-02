@@ -62,7 +62,15 @@ export default class Emitter<TEvents extends Record<string, unknown[]> = Record<
 	) {
 		const callable = preWrappedCallback ?? originalCallback;
 		const wrappedCallback = (event: CustomEvent<EventDetail<this, TEvents, TEventName>>) => {
-			void callable(event.detail.event, ...event.detail.args);
+			if (event.detail.errorHandler) {
+				try {
+					void callable(event.detail.event, ...event.detail.args);
+				} catch (error) {
+					void event.detail.errorHandler(error);
+				}
+			} else {
+				void callable(event.detail.event, ...event.detail.args);
+			}
 		};
 
 		this.#attachListener(eventName, originalCallback, wrappedCallback);
@@ -126,15 +134,25 @@ export default class Emitter<TEvents extends Record<string, unknown[]> = Record<
 		this.#on(eventName, callback, wrappedCallback);
 	}
 
-	trigger<TEventName extends Extract<keyof TEvents, string>>(eventName: TEventName, ...args: TEvents[TEventName]) {
+	#dispatchEvent<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		args: TEvents[TEventName],
+		details: Partial<Omit<EventDetail<never, never, never>, 'event' | 'args'>> = {},
+	) {
 		this.#eventTarget.dispatchEvent(
-			new CustomEvent(eventName, {
-				detail: { event: new EmitterEvent(this, eventName), args } satisfies EventDetail<
-					this,
-					TEvents,
-					TEventName
-				>,
-			}),
+			new CustomEvent(eventName, { detail: { event: new EmitterEvent(this, eventName), args, ...details } }),
 		);
+	}
+
+	trigger<TEventName extends Extract<keyof TEvents, string>>(eventName: TEventName, ...args: TEvents[TEventName]) {
+		this.#dispatchEvent(eventName, args);
+	}
+
+	triggerSafe<TEventName extends Extract<keyof TEvents, string>>(
+		eventName: TEventName,
+		errorHandler: (error: unknown) => void | Promise<void>,
+		...args: TEvents[TEventName]
+	) {
+		this.#dispatchEvent(eventName, args, { errorHandler });
 	}
 }

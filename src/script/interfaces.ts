@@ -49,26 +49,22 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 		});
 
 		elevator.on('passing_floor', (event, floorNum, direction) => {
-			this.#tryTrigger('passing_floor', floorNum, direction);
-			this.#tryTrigger('willPassFloor', floorNum, direction);
+			this.trigger('passing_floor', floorNum, direction);
+			this.trigger('willPassFloor', floorNum, direction);
 		});
 
 		elevator.on('stopped_at_floor', (event, floorNum) => {
-			this.#tryTrigger('stopped_at_floor', floorNum);
-			this.#tryTrigger('arrive', floorNum);
+			this.trigger('stopped_at_floor', floorNum);
+			this.trigger('arrive', floorNum);
 		});
 		elevator.on('floor_button_pressed', (event, floorNum) => {
-			this.#tryTrigger('floor_button_pressed', floorNum);
-			this.#tryTrigger('call', floorNum);
+			this.trigger('floor_button_pressed', floorNum);
+			this.trigger('call', floorNum);
 		});
 	}
 
-	#tryTrigger(event: keyof ElevatorInterfaceEvents, ...args: ElevatorInterfaceEvents[keyof ElevatorInterfaceEvents]) {
-		try {
-			this.trigger(event, ...args);
-		} catch (e) {
-			this.#errorHandler(e);
-		}
+	trigger(event: keyof ElevatorInterfaceEvents, ...args: ElevatorInterfaceEvents[keyof ElevatorInterfaceEvents]) {
+		this.triggerSafe(event, this.#errorHandler, ...args);
 	}
 
 	checkDestinationQueue() {
@@ -76,7 +72,7 @@ export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 			if (this.destinationQueue.length) {
 				this.#elevator.goToFloor(_.first(this.destinationQueue));
 			} else {
-				this.#tryTrigger('idle');
+				this.trigger('idle');
 			}
 		}
 	}
@@ -205,21 +201,17 @@ export class FloorInterface extends Emitter<FloorInterfaceEvents> {
 		this.#errorHandler = errorHandler;
 
 		floor.on('up_button_pressed', (event, ...args) => {
-			this.#tryTrigger('up_button_pressed', ...args);
-			this.#tryTrigger('call', 'up', this);
+			this.trigger('up_button_pressed', ...args);
+			this.trigger('call', 'up', this);
 		});
 		floor.on('down_button_pressed', (event, ...args) => {
-			this.#tryTrigger('down_button_pressed', ...args);
-			this.#tryTrigger('call', 'down', this);
+			this.trigger('down_button_pressed', ...args);
+			this.trigger('call', 'down', this);
 		});
 	}
 
-	#tryTrigger(event: keyof FloorInterfaceEvents, ...args: FloorInterfaceEvents[keyof FloorInterfaceEvents]) {
-		try {
-			this.trigger(event, ...args);
-		} catch (e) {
-			this.#errorHandler(e);
-		}
+	trigger(event: keyof FloorInterfaceEvents, ...args: FloorInterfaceEvents[keyof FloorInterfaceEvents]) {
+		this.triggerSafe(event, this.#errorHandler, ...args);
 	}
 
 	/**
