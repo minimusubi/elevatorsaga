@@ -102,8 +102,6 @@ export class Editor extends Emitter<EditorEvents> {
 			// eslint-disable-next-line @typescript-eslint/no-deprecated
 			navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone' ? '⌘' : 'Ctrl',
 		);
-		// The async callback returns a promise , but typings expect void
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		saveButton.addEventListener('click', async () => {
 			await this.save();
 			this.editor.focus();
@@ -124,8 +122,6 @@ export class Editor extends Emitter<EditorEvents> {
 			this.editor.focus();
 		});
 
-		// The async callback returns a promise , but typings expect void
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		document.querySelector('#button_format')!.addEventListener('click', this.format.bind(this));
 
 		this.autoFormat = !!JSON.parse(localStorage.getItem(config.STORAGE_KEY_FORMAT_ON_SAVE) ?? 'true');

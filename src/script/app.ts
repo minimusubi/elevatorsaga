@@ -165,8 +165,6 @@ export class App extends Emitter {
 	}
 }
 
-// The async callback returns a promise , but typings expect void
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 document.addEventListener('DOMContentLoaded', async () => {
 	const editor = await Editor.create();
 	const codestatus = document.querySelector<HTMLElement>('.codestatus')!;

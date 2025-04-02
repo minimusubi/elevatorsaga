@@ -27,6 +27,7 @@ export default tseslint.config(
 			'@typescript-eslint/only-throw-error': 'off',
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/no-invalid-void-type': ['error', { allowAsThisParameter: true }],
+			'@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
 			'@typescript-eslint/no-non-null-assertion': 'off',
 			'@typescript-eslint/no-this-alias': 'off',
 			'@typescript-eslint/no-unused-vars': 'warn',
