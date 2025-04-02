@@ -77,7 +77,6 @@ export default class User extends Movable<UserEvents> {
 		const pos = elevator.userEntering(this);
 		if (pos) {
 			// Success
-			// @ts-expect-error Elevator will never satisfy Movable because of the generic
 			this.setParent(elevator);
 			this.trigger('entered_elevator', elevator);
 			const self = this;

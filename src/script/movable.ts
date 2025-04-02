@@ -17,13 +17,15 @@ type MovableEvents = {
 	new_display_state: [movable: Movable<MovableEvents>];
 };
 
+type NonEmittingMovable = Omit<Movable, '#listeners' | 'on' | 'once' | 'off'>;
+
 // export default class Movable<TEvents extends Record<string, unknown[]>> extends Emitter<MovableEvents & TEvents> {
 export default class Movable<TEvents extends Record<string, unknown[]> = Record<string, never>> extends Emitter<
 	Omit<MovableEvents, keyof TEvents> & TEvents
 > {
 	x = 0.0;
 	y = 0.0;
-	parent: Movable | null = null;
+	parent: NonEmittingMovable | null = null;
 	worldX = 0.0;
 	worldY = 0.0;
 	currentTask: ((deltaTime: number) => void) | null = null;
@@ -151,7 +153,7 @@ export default class Movable<TEvents extends Record<string, unknown[]> = Record<
 		storage[1] = resultY;
 	}
 
-	setParent(movableParent: Movable | null) {
+	setParent(movableParent: NonEmittingMovable | null) {
 		const objWorld: [number, number] = [0, 0];
 		if (movableParent === null) {
 			if (this.parent !== null) {
