@@ -176,9 +176,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 	// Handle uncaught promise rejections in user code
 	window.addEventListener('unhandledrejection', (event) => {
-		if (isUserError(event.reason as Error)) {
+		if (isUserError(event.reason)) {
 			app.worldController.setPaused(true);
-			presentCodeStatus(codestatus, codeStatusTempl, event.reason as Error);
+			presentCodeStatus(codestatus, codeStatusTempl, event.reason);
 		}
 	});
 	editor.on('apply_code', async () => {

@@ -17,10 +17,10 @@ type FloorEvents = {
 export default class Floor extends Emitter<FloorEvents> {
 	level: number;
 	yPosition: number;
-	errorHandler: (error: any) => void;
+	errorHandler: (error: unknown) => void;
 	buttonStates: ButtonStates = { up: '', down: '' };
 
-	constructor(floorLevel: number, yPosition: number, errorHandler: (error: any) => void) {
+	constructor(floorLevel: number, yPosition: number, errorHandler: (error: unknown) => void) {
 		super();
 
 		this.level = floorLevel;

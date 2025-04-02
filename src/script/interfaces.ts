@@ -23,10 +23,10 @@ type ElevatorInterfaceEvents = {
 export class ElevatorInterface extends Emitter<ElevatorInterfaceEvents> {
 	#elevator: Elevator;
 	#floorCount: number;
-	#errorHandler: (error: any) => void;
+	#errorHandler: (error: unknown) => void;
 	destinationQueue: number[];
 
-	constructor(elevator: Elevator, floorCount: number, errorHandler: (error: any) => void) {
+	constructor(elevator: Elevator, floorCount: number, errorHandler: (error: unknown) => void) {
 		super();
 
 		this.#elevator = elevator;
@@ -196,9 +196,9 @@ type FloorInterfaceEvents = {
 // TODO: Write tests
 export class FloorInterface extends Emitter<FloorInterfaceEvents> {
 	#floor: Floor;
-	#errorHandler: (error: any) => void;
+	#errorHandler: (error: unknown) => void;
 
-	constructor(floor: Floor, errorHandler: (error: any) => void) {
+	constructor(floor: Floor, errorHandler: (error: unknown) => void) {
 		super();
 
 		this.#floor = floor;

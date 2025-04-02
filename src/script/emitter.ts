@@ -28,6 +28,7 @@ interface EventDetail<
 > {
 	event: EmitterEvent<TEmitter, TEventName>;
 	args: TEvents[TEventName];
+	errorHandler?: (error: unknown) => void | Promise<void>;
 }
 
 export default class Emitter<TEvents extends Record<string, unknown[]> = Record<string, never>> {

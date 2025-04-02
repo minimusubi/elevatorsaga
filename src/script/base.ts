@@ -75,12 +75,26 @@ export const getModuleFromUserCode = async function (code: string) {
 	return userModule as UserModule;
 };
 
-const USER_ERROR_REGEX = /blob:.+:(?<line>\d+):(?<column>\d+)(?=\)(?:\n|$))/g;
+const USER_ERROR_REGEX = /blob:.+:(?<line>\d+):(?<column>\d+)(?=\)?(?:\n|$))/g;
 
-export const isUserError = (error: Error) => {
-	return USER_ERROR_REGEX.test(error.stack ?? '');
+export const isUserError = (error: unknown) => {
+	if (typeof error === 'object' && error !== null && 'stack' in error && typeof error.stack === 'string') {
+		return USER_ERROR_REGEX.test(error.stack);
+	}
+
+	return false;
+};
+
+const escapeHtml = (string: string) => {
+	return string
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&apos;');
 };
 
 export const formatUserErrorStacktrace = (stacktrace: string) => {
-	return stacktrace.replaceAll(USER_ERROR_REGEX, 'USER_CODE: Line $<line>, column $<column>');
+	// Escape messages such as "TypeError: Cannot assign to read only property 'type' of object '#<EmitterEvent>'"
+	return escapeHtml(stacktrace).replaceAll(USER_ERROR_REGEX, 'USER_CODE: Line $<line>, column $<column>');
 };

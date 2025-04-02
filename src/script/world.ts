@@ -112,7 +112,7 @@ export class World extends Emitter<WorldEvents> {
 
 		this.floorHeight = mergedOptions.floorHeight;
 
-		const handleUserCodeError = (e: Error) => {
+		const handleUserCodeError = (e: unknown) => {
 			this.trigger('usercode_error', e);
 		};
 
@@ -322,7 +322,7 @@ export class WorldController extends Emitter<WorldControllerEvents> {
 				try {
 					userModule.update(scaledDt, world.elevatorInterfaces, world.floorInterfaces);
 				} catch (e) {
-					this.handleUserCodeError(e as Error);
+					this.handleUserCodeError(e);
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 				while (scaledDt > 0.0 && !world.challengeEnded) {
