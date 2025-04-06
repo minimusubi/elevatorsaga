@@ -14,7 +14,7 @@ import { Editor } from './editor.js';
 import Emitter from './emitter.js';
 import { challenges } from './challenges.js';
 import config from './config.js';
-import { fitnessSuite } from './fitness.js';
+// import { fitnessSuite } from './fitness.js';
 import { getTemplate } from './util.js';
 import { isUserError } from './base.js';
 
