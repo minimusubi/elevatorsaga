@@ -1,3 +1,5 @@
+// Uses https://github.com/suren-atoyan/monaco-loader to load monaco
+
 import * as _ from 'https://unpkg.com/radashi@12.4.0/dist/radashi.js';
 import type * as monaco from 'monaco-editor';
 import * as prettier from 'https://unpkg.com/prettier@3.5.2/standalone.mjs';
