@@ -403,6 +403,8 @@ describe('Elevator Saga', () => {
 				timeForwarder(5.0, STEPSIZE, (dt) => {
 					e.update(dt);
 					e.updateElevatorMovement(dt);
+					// @ts-expect-error Types are not accurate for the version of jasmine used
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 					expect(e.getExactCurrentFloor()).toBeWithinRange(1.0, 3.0, `(STEPSIZE is ${STEPSIZE})`);
 				});
 				expect(e.getExactCurrentFloor()).toEqual(3.0);
